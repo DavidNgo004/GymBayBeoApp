@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "732893085191",
+    "project_id": "gym-bay-beo-6a177",
+    "storage_bucket": "gym-bay-beo-6a177.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:732893085191:android:ee801164b6da30e5d4b4a2",
+        "android_client_info": {
+          "package_name": "com.example.gym_bay_beo"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "732893085191-p409hmec3lkni0j76rt59uhrd67kq21r.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.gym_bay_beo",
+            "certificate_hash": "8ceb576ef20b929bd40d590fc9f60853f6ce184f"
+          }
+        },
+        {
+          "client_id": "732893085191-o0jhff7rtlq59qdb0jqvq6avvnv27jd6.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDfHY-L1hjedOZNRtuULQwn4x0UZle6ChM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "732893085191-o0jhff7rtlq59qdb0jqvq6avvnv27jd6.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
