@@ -3,6 +3,9 @@
 *.log
 *.pyc
 *.swp
+*.tmp
+*.bak
+*.orig
 .DS_Store
 .atom/
 .build/
@@ -11,19 +14,17 @@
 .svn/
 .swiftpm/
 migrate_working_dir/
+.env
+.env.*
 
-# IntelliJ related
+# IDE & Editor
+.idea/
 *.iml
 *.ipr
 *.iws
-.idea/
-
-# VS Code (bỏ comment nếu muốn bỏ qua hoàn toàn)
 .vscode/
 
-# Flutter/Dart/Pub related
-**/doc/api/
-**/ios/Flutter/.last_build_id
+# Flutter & Dart
 .dart_tool/
 .flutter-plugins
 .flutter-plugins-dependencies
@@ -32,19 +33,14 @@ migrate_working_dir/
 .pub/
 build/
 coverage/
+*.lcov
 lib/generated_plugin_registrant.dart
 
-# Symbolication related
-app.*.symbols
-
-# Obfuscation related
-app.*.map.json
-
-# Android related
-/android/app/debug
-/android/app/profile
-/android/app/release
-/android/app/build/
+# Android
+android/app/build/
+android/app/debug/
+android/app/profile/
+android/app/release/
 *.apk
 *.aab
 *.dex
@@ -56,18 +52,22 @@ gradlew
 gradlew.bat
 local.properties
 
-# iOS related
-**/ios/**/build/
-**/ios/Runner.xcworkspace/
-**/ios/Runner.xcodeproj/project.xcworkspace/
-**/ios/Runner.xcodeproj/xcshareddata/
-**/ios/Flutter/App.framework
-**/ios/Flutter/Flutter.framework
-**/ios/Flutter/Generated.xcconfig
-**/ios/Flutter/app.flutter-plugin
-**/ios/Flutter/flutter_export_environment.sh
-**/ios/Pods/
-**/ios/Podfile.lock
+# iOS
+ios/**/build/
+ios/Flutter/App.framework
+ios/Flutter/Flutter.framework
+ios/Flutter/Generated.xcconfig
+ios/Flutter/app.flutter-plugin
+ios/Flutter/flutter_export_environment.sh
+ios/Pods/
+ios/Podfile.lock
+ios/Runner.xcworkspace/
+ios/Runner.xcodeproj/project.xcworkspace/
+ios/Runner.xcodeproj/xcshareddata/
 
-# Web related
-**/web/build/
+# Web
+web/build/
+
+# Symbolication & Obfuscation
+app.*.symbols
+app.*.map.json

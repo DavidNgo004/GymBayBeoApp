@@ -20,11 +20,22 @@ class HomePage extends StatelessWidget {
           children: [
             Center(child: Image.asset('assets/images/logo.png', height: 200)),
             const SizedBox(height: 20),
-            Text("Gym Bay Béo", style: TextStyle(fontSize: 18)),
+            Text(
+              "Gym Bay Béo",
+              style: TextStyle(
+                fontSize: 32,
+                fontWeight: FontWeight.bold,
+                color: AppColors.primary,
+              ),
+            ),
             const SizedBox(height: 15),
             Text(
               "Nơi bắt đầu hành trình luyện tập của bạn",
-              style: TextStyle(fontSize: 14, color: AppColors.primary),
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: AppColors.primary,
+              ),
             ),
             const SizedBox(height: 30),
             Row(
