@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gym_bay_beo/conf/app_colors.dart';
 import 'package:gym_bay_beo/pages/auth/login_page.dart';
 import 'package:gym_bay_beo/pages/auth/register_page.dart';
 
@@ -10,6 +11,7 @@ class HomePage extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       home: Scaffold(
+        backgroundColor: AppColors.background,
         body: Column(
           mainAxisAlignment:
               MainAxisAlignment.center, // Căn giữa theo chiều dọc
@@ -22,7 +24,7 @@ class HomePage extends StatelessWidget {
             const SizedBox(height: 15),
             Text(
               "Nơi bắt đầu hành trình luyện tập của bạn",
-              style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+              style: TextStyle(fontSize: 14, color: AppColors.primary),
             ),
             const SizedBox(height: 30),
             Row(
@@ -44,12 +46,19 @@ class HomePage extends StatelessWidget {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
+                    backgroundColor: AppColors.primary,
                   ),
                   child: const Text(
                     "Đăng nhập",
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: AppColors.textBtn,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
+
+                const SizedBox(width: 20),
 
                 ElevatedButton(
                   onPressed: () async {
@@ -66,10 +75,15 @@ class HomePage extends StatelessWidget {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
+                    backgroundColor: AppColors.primary,
                   ),
                   child: const Text(
                     "Đăng ký",
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: AppColors.textBtn,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ],

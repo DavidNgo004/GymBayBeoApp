@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:gym_bay_beo/pages/home_page.dart';
 import 'firebase_options.dart';
-import 'pages/auth/auth_page.dart';
 import 'conf/app_theme.dart';
 
 void main() async {
@@ -32,7 +32,7 @@ class MyApp extends StatelessWidget {
       title: "Gym Bay Béo",
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      home: const AuthPage(),
+      home: const HomePage(),
     );
   }
 }
