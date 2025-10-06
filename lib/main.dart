@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:gym_bay_beo/pages/home_page.dart';
+import 'package:gym_bay_beo/models/admin_account.dart';
 import 'firebase_options.dart';
 import 'conf/app_theme.dart';
 
@@ -19,6 +20,8 @@ void main() async {
   } catch (e) {
     debugPrint("Firebase init error: $e");
   }
+
+  await createDefaultAdmin();
 
   runApp(const MyApp());
 }

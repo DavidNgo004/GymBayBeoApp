@@ -18,6 +18,8 @@ class _RegisterPageState extends State<RegisterPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passController = TextEditingController();
   final TextEditingController _rePassController = TextEditingController();
+  bool _obscurePassword = true;
+  bool _obscureRePassword = true;
   bool _isLoading = false;
 
   // regex password: ít nhất 1 in hoa, 1 số, 1 ký tự đặc biệt, 6+ ký tự
@@ -112,13 +114,19 @@ class _RegisterPageState extends State<RegisterPage> {
                   style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 32),
-                _buildTextField(_nameController, "Tên khách hàng", false),
+                _buildTextField(
+                  _nameController,
+                  "Tên khách hàng",
+                  false,
+                  icon: Icons.person,
+                ),
                 const SizedBox(height: 16),
                 _buildTextField(
                   _phoneController,
                   "Số điện thoại",
                   false,
                   keyboard: TextInputType.phone,
+                  icon: Icons.phone,
                 ),
                 const SizedBox(height: 16),
                 _buildTextField(
@@ -126,14 +134,23 @@ class _RegisterPageState extends State<RegisterPage> {
                   "Email",
                   false,
                   keyboard: TextInputType.emailAddress,
+                  icon: Icons.email,
                 ),
                 const SizedBox(height: 16),
-                _buildTextField(_passController, "Mật khẩu", true),
+                _buildTextField(
+                  _passController,
+                  "Mật khẩu",
+                  true,
+                  icon: Icons.lock,
+                  isMainPassword: true,
+                ),
                 const SizedBox(height: 16),
                 _buildTextField(
                   _rePassController,
                   "Nhập lại mật khẩu",
                   true,
+                  icon: Icons.lock,
+                  isRePassword: true,
                   validator: (val) {
                     if (val != _passController.text)
                       return "Mật khẩu không khớp";
@@ -194,10 +211,15 @@ class _RegisterPageState extends State<RegisterPage> {
     bool obscure, {
     TextInputType keyboard = TextInputType.text,
     String? Function(String?)? validator,
+    IconData? icon,
+    bool isMainPassword = false,
+    bool isRePassword = false,
   }) {
     return TextFormField(
       controller: controller,
-      obscureText: obscure,
+      obscureText: obscure
+          ? (isMainPassword ? _obscurePassword : _obscureRePassword)
+          : false,
       keyboardType: keyboard,
       validator:
           validator ??
@@ -210,6 +232,26 @@ class _RegisterPageState extends State<RegisterPage> {
           },
       decoration: InputDecoration(
         labelText: label,
+        prefixIcon: icon != null ? Icon(icon, color: AppColors.primary) : null,
+        suffixIcon: obscure
+            ? IconButton(
+                icon: Icon(
+                  (isMainPassword ? _obscurePassword : _obscureRePassword)
+                      ? Icons.visibility_off
+                      : Icons.visibility,
+                  color: AppColors.primary,
+                ),
+                onPressed: () {
+                  setState(() {
+                    if (isMainPassword) {
+                      _obscurePassword = !_obscurePassword;
+                    } else if (isRePassword) {
+                      _obscureRePassword = !_obscureRePassword;
+                    }
+                  });
+                },
+              )
+            : null,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         contentPadding: const EdgeInsets.symmetric(
           vertical: 16,

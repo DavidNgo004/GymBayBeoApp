@@ -8,6 +8,7 @@ import '../customer/customer_home.dart';
 import '../pt/pt_home.dart';
 import '../admin/admin_home.dart';
 import 'package:gym_bay_beo/pages/home_page.dart';
+import 'package:gym_bay_beo/pages/auth/forgot_password_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -20,6 +21,7 @@ class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passController = TextEditingController();
+  bool _obscurePassword = true;
   bool _isLoading = false;
 
   Future<void> _loginEmail() async {
@@ -176,6 +178,24 @@ class _LoginPageState extends State<LoginPage> {
                     color: AppColors.textField,
                   ),
                 ),
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const ForgotPasswordPage(),
+                        ),
+                      );
+                    },
+                    child: const Text(
+                      "Quên mật khẩu?",
+                      style: TextStyle(color: AppColors.primary),
+                    ),
+                  ),
+                ),
                 const SizedBox(height: 32),
                 SizedBox(
                   width: double.infinity,
@@ -248,7 +268,7 @@ class _LoginPageState extends State<LoginPage> {
                   child: const Text(
                     "Quay về trang chủ",
                     style: TextStyle(
-                      color: Colors.grey,
+                      color: AppColors.primary,
                       decoration: TextDecoration.none,
                     ),
                   ),
@@ -270,7 +290,7 @@ class _LoginPageState extends State<LoginPage> {
   }) {
     return TextFormField(
       controller: controller,
-      obscureText: obscure,
+      obscureText: obscure ? _obscurePassword : false,
       keyboardType: keyboard,
       validator: (val) {
         if (val == null || val.isEmpty) return "Vui lòng nhập $label";
@@ -278,12 +298,30 @@ class _LoginPageState extends State<LoginPage> {
       },
       decoration: InputDecoration(
         labelText: label,
+        prefixIcon: Icon(
+          label == "Email" ? Icons.email : Icons.lock,
+          color: AppColors.primary,
+        ),
+        suffixIcon: obscure
+            ? IconButton(
+                icon: Icon(
+                  _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                  color: AppColors.primary,
+                ),
+                onPressed: () {
+                  setState(() {
+                    _obscurePassword = !_obscurePassword;
+                  });
+                },
+              )
+            : null,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         contentPadding: const EdgeInsets.symmetric(
           vertical: 16,
           horizontal: 16,
         ),
       ),
+      style: style,
     );
   }
 }

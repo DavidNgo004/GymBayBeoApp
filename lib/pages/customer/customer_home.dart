@@ -1,8 +1,10 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../conf/app_colors.dart';
-import '../../services/auth_service.dart';
+import 'package:gym_bay_beo/widgets/confirm_logout_dialog.dart';
+import 'package:gym_bay_beo/pages/customer/profile_page.dart';
 
 class CustomerHomePage extends StatefulWidget {
   const CustomerHomePage({super.key});
@@ -14,23 +16,25 @@ class CustomerHomePage extends StatefulWidget {
 class _CustomerHomePageState extends State<CustomerHomePage> {
   int _selectedIndex = 0;
   String? userName;
+  String? localImagePath;
 
   @override
   void initState() {
     super.initState();
-    _fetchUserName();
+    _fetchUserInfo();
   }
 
-  Future<void> _fetchUserName() async {
+  Future<void> _fetchUserInfo() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
       final doc = await FirebaseFirestore.instance
           .collection('users')
           .doc(user.uid)
           .get();
-      if (doc.exists && doc.data()?['name'] != null) {
+      if (doc.exists) {
         setState(() {
-          userName = doc['name'];
+          userName = doc.data()?['name'];
+          localImagePath = doc.data()?['localImagePath'];
         });
       }
     }
@@ -38,7 +42,7 @@ class _CustomerHomePageState extends State<CustomerHomePage> {
 
   void _onItemTapped(int index) async {
     if (index == 3) {
-      await AuthService.logout(context);
+      await showLogoutConfirmDialog(context);
     } else {
       setState(() {
         _selectedIndex = index;
@@ -59,7 +63,36 @@ class _CustomerHomePageState extends State<CustomerHomePage> {
         foregroundColor: AppColors.textBtn,
         elevation: 2,
         actions: [
-          IconButton(icon: const Icon(Icons.account_circle), onPressed: () {}),
+          GestureDetector(
+            onTap: () async {
+              final updated = await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ProfilePage(
+                    name: userName ?? '',
+                    localImagePath: localImagePath ?? '',
+                  ),
+                ),
+              );
+              if (updated == true) {
+                _fetchUserInfo(); // 🔄 Cập nhật lại sau khi chỉnh sửa
+              }
+            },
+            child: Padding(
+              padding: const EdgeInsets.only(right: 12.0),
+              child: CircleAvatar(
+                radius: 20,
+                backgroundColor: Colors.grey[300],
+                backgroundImage:
+                    (localImagePath != null &&
+                        localImagePath!.isNotEmpty &&
+                        File(localImagePath!).existsSync())
+                    ? FileImage(File(localImagePath!))
+                    : const AssetImage('assets/images/avatar_placeholder.png')
+                          as ImageProvider,
+              ),
+            ),
+          ),
         ],
       ),
       body: Padding(
@@ -72,11 +105,10 @@ class _CustomerHomePageState extends State<CustomerHomePage> {
               ),
               clipBehavior: Clip.hardEdge,
               child: Image.network(
-                "https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExOWgyZjlhbHl6a3c2MHUzbWFrM2w5d2lweTZhZmtzdnV1YWY3enRmMSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/hV0pccEE0jLfelZPCC/giphy.gif",
+                "https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExbDJrY3oxYWpybmFsbm02N2Z3dWtxZjN0a2ZuaXptMThnNjM3MDZqYyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/DtkOAxWAFUkCI/giphy.gif",
                 height: 300,
               ),
             ),
-
             const SizedBox(height: 16),
             Expanded(
               child: GridView.count(

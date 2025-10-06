@@ -9,11 +9,14 @@ class AdminHomePage extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text("Quản trị viên"),
+        title: const Text(
+          "Quản trị viên",
+          style: TextStyle(color: AppColors.textPrimary),
+        ),
         backgroundColor: AppColors.primary,
         actions: [
           IconButton(
-            icon: const Icon(Icons.settings),
+            icon: const Icon(Icons.settings, color: AppColors.textPrimary),
             onPressed: () {
               // TODO: mở cài đặt admin
             },

@@ -1,25 +1,35 @@
 class UserModel {
-  final String uid;
+  final String id;
+  final String name;
   final String email;
-  final String role;
-  final String? name;
-  final String? photoUrl;
+  final String phone;
+  final String imageUrl;
 
   UserModel({
-    required this.uid,
+    required this.id,
+    required this.name,
     required this.email,
-    required this.role,
-    this.name,
-    this.photoUrl,
+    required this.phone,
+    required this.imageUrl,
   });
 
-  factory UserModel.fromMap(Map<String, dynamic> data) {
+  factory UserModel.fromMap(String id, Map<String, dynamic> data) {
     return UserModel(
-      uid: data['uid'],
-      email: data['email'],
-      role: data['role'],
-      name: data['name'],
-      photoUrl: data['photoUrl'],
+      id: id,
+      name: data['name'] ?? '',
+      email: data['email'] ?? '',
+      phone: data['phone'] ?? '',
+      imageUrl: data['imageUrl'] ?? '',
     );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'name': name,
+      'email': email,
+      'phone': phone,
+      'imageUrl': imageUrl,
+      'updatedAt': DateTime.now(),
+    };
   }
 }
