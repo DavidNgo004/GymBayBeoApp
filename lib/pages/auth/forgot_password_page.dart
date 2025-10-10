@@ -30,7 +30,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
             content: Text(
               "Email đặt lại mật khẩu đã được gửi. Vui lòng kiểm tra hộp thư của bạn!",
             ),
-            backgroundColor: Colors.green,
+            backgroundColor: AppColors.success,
           ),
         );
         Navigator.pop(context);

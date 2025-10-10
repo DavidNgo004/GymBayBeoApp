@@ -10,4 +10,6 @@ class AppColors {
   static const textField = Colors.black;
   static const unSelectedItem = Colors.white;
   static const toolbarBG = Colors.black;
+  static const success = Colors.green;
+  static const error = Colors.red;
 }
