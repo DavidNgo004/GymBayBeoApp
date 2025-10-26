@@ -1,73 +1,47 @@
+/lib/key.dart
+
 # Miscellaneous
 *.class
 *.log
 *.pyc
 *.swp
-*.tmp
-*.bak
-*.orig
 .DS_Store
 .atom/
-.build/
 .buildlog/
 .history
 .svn/
-.swiftpm/
-migrate_working_dir/
-.env
-.env.*
 
-# IDE & Editor
-.idea/
+# IntelliJ related
 *.iml
 *.ipr
 *.iws
-.vscode/
+.idea/
 
-# Flutter & Dart
+# The .vscode folder contains launch configuration and tasks you configure in
+# VS Code which you may wish to be included in version control, so this line
+# is commented out by default.
+#.vscode/
+
+# Flutter/Dart/Pub related
+**/doc/api/
 .dart_tool/
 .flutter-plugins
 .flutter-plugins-dependencies
 .packages
 .pub-cache/
 .pub/
-build/
-coverage/
-*.lcov
+/build/
+
+# Web related
 lib/generated_plugin_registrant.dart
 
-# Android
-android/app/build/
-android/app/debug/
-android/app/profile/
-android/app/release/
-*.apk
-*.aab
-*.dex
-*.jar
-*.keystore
-*.jks
-.gradle/
-gradlew
-gradlew.bat
-local.properties
+# Exceptions to above rules.
+!/packages/flutter_tools/test/data/dart_dependencies_test/**/.packages
+analysis_options.yaml
+.vscode/launch.json
+.vscode/settings.json
 
-# iOS
-ios/**/build/
-ios/Flutter/App.framework
-ios/Flutter/Flutter.framework
-ios/Flutter/Generated.xcconfig
-ios/Flutter/app.flutter-plugin
-ios/Flutter/flutter_export_environment.sh
-ios/Pods/
-ios/Podfile.lock
-ios/Runner.xcworkspace/
-ios/Runner.xcodeproj/project.xcworkspace/
-ios/Runner.xcodeproj/xcshareddata/
 
-# Web
-web/build/
-
-# Symbolication & Obfuscation
-app.*.symbols
-app.*.map.json
+.fvm/
+packages/zoom_video_sdk/ios/MobileRTC*
+ios/lib/

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <title>Kết quả thanh toán</title>
+  <style>
+    body { font-family: Arial, sans-serif; text-align: center; margin-top: 80px; }
+    button {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      padding: 12px 18px;
+      font-size: 16px;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h2>Đang xử lý thanh toán...</h2>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+    import { getFirestore, doc, updateDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "...",
+      authDomain: "gym-bay-beo-6a177.firebaseapp.com",
+      projectId: "gym-bay-beo-6a177",
+      storageBucket: "gym-bay-beo-6a177.appspot.com",
+      messagingSenderId: "...",
+      appId: "..."
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const orderId = urlParams.get("vnp_TxnRef");
+    const responseCode = urlParams.get("vnp_ResponseCode");
+
+    async function updateStatus() {
+      if (!orderId) return;
+
+      const status = responseCode === "00" ? "success" : "failed";
+
+      await updateDoc(doc(db, "payments", orderId), { status: status });
+
+      document.body.innerHTML = `
+        <h3>Thanh toán ${status === "success" ? "THÀNH CÔNG ✅" : "THẤT BẠI ❌"}</h3>
+        <button onclick="redirectApp()">Quay lại ứng dụng</button>
+      `;
+    }
+
+    function redirectApp() {
+      window.location.href = "mygymapp://payment-result?status=" + (responseCode === "00" ? "success" : "failed");
+    }
+
+    updateStatus();
+  </script>
+
+</body>
+</html>

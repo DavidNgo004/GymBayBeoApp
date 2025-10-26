@@ -18,11 +18,12 @@ class _RegisterPageState extends State<RegisterPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passController = TextEditingController();
   final TextEditingController _rePassController = TextEditingController();
+
+  String _gender = 'Nam'; // mặc định là Nam
   bool _obscurePassword = true;
   bool _obscureRePassword = true;
   bool _isLoading = false;
 
-  // regex password: ít nhất 1 in hoa, 1 số, 1 ký tự đặc biệt, 6+ ký tự
   final RegExp passwordRegex = RegExp(
     r'^(?=.*[A-Z])(?=.*\d)(?=.*[!@#\$&*~]).{6,}$',
   );
@@ -52,23 +53,45 @@ class _RegisterPageState extends State<RegisterPage> {
             password: _passController.text,
           );
 
-      // Lưu vào Firestore
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(userCredential.user!.uid)
-          .set({
-            'name': _nameController.text.trim(),
-            'phone': _phoneController.text.trim(),
-            'email': _emailController.text.trim(),
-            'role': 'customer',
-            'createdAt': FieldValue.serverTimestamp(),
-          });
+      final uid = userCredential.user!.uid;
+      final email = _emailController.text.trim();
+      final name = _nameController.text.trim();
+      final phone = _phoneController.text.trim();
+
+      // =========================
+      // Lưu vào bảng "users"
+      // =========================
+      await FirebaseFirestore.instance.collection('users').doc(uid).set({
+        'uid': uid,
+        'name': name,
+        'phone': phone,
+        'email': email,
+        'gender': _gender,
+        'role': 'customer',
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+
+      // =========================
+      // Lưu thêm vào bảng "customers"
+      // =========================
+      await FirebaseFirestore.instance.collection('customers').doc(uid).set({
+        'createdAt': FieldValue.serverTimestamp(),
+        'uid': uid,
+        'email': email,
+        'goal': '',
+        'height': '',
+        'weight': '',
+        'imageUrl':
+            'https://res.cloudinary.com/drzg13ngi/image/upload/v1760013365/gymbaybeo/35_kdnpv7.jpg',
+        'name': name,
+        'phone': phone,
+        'gender': _gender,
+      });
 
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text("Đăng ký thành công!")));
 
-      // Chuyển về LoginPage sau 1 giây
       Future.delayed(const Duration(seconds: 1), () {
         Navigator.pushReplacement(
           context,
@@ -76,9 +99,9 @@ class _RegisterPageState extends State<RegisterPage> {
         );
       });
     } on FirebaseAuthException catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(e.message ?? "Lỗi đăng ký")));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message ?? "Lỗi khi đăng ký tài khoản")),
+      );
     } catch (e) {
       ScaffoldMessenger.of(
         context,
@@ -100,7 +123,7 @@ class _RegisterPageState extends State<RegisterPage> {
             child: Column(
               children: [
                 Image.asset("assets/images/logo.png", height: 120),
-                const SizedBox(height: 16),
+                const SizedBox(height: 5),
                 const Text(
                   "Gym Bay Béo",
                   style: TextStyle(
@@ -111,9 +134,15 @@ class _RegisterPageState extends State<RegisterPage> {
                 ),
                 const Text(
                   "Đăng ký để bắt đầu luyện tập",
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primary,
+                  ),
                 ),
                 const SizedBox(height: 32),
+
+                // Tên khách hàng
                 _buildTextField(
                   _nameController,
                   "Tên khách hàng",
@@ -121,6 +150,8 @@ class _RegisterPageState extends State<RegisterPage> {
                   icon: Icons.person,
                 ),
                 const SizedBox(height: 16),
+
+                // Số điện thoại
                 _buildTextField(
                   _phoneController,
                   "Số điện thoại",
@@ -129,6 +160,8 @@ class _RegisterPageState extends State<RegisterPage> {
                   icon: Icons.phone,
                 ),
                 const SizedBox(height: 16),
+
+                // Email
                 _buildTextField(
                   _emailController,
                   "Email",
@@ -137,6 +170,12 @@ class _RegisterPageState extends State<RegisterPage> {
                   icon: Icons.email,
                 ),
                 const SizedBox(height: 16),
+
+                // Giới tính
+                _buildGenderField(),
+                const SizedBox(height: 16),
+
+                // Mật khẩu
                 _buildTextField(
                   _passController,
                   "Mật khẩu",
@@ -145,6 +184,8 @@ class _RegisterPageState extends State<RegisterPage> {
                   isMainPassword: true,
                 ),
                 const SizedBox(height: 16),
+
+                // Nhập lại mật khẩu
                 _buildTextField(
                   _rePassController,
                   "Nhập lại mật khẩu",
@@ -152,12 +193,15 @@ class _RegisterPageState extends State<RegisterPage> {
                   icon: Icons.lock,
                   isRePassword: true,
                   validator: (val) {
-                    if (val != _passController.text)
+                    if (val != _passController.text) {
                       return "Mật khẩu không khớp";
+                    }
                     return null;
                   },
                 ),
                 const SizedBox(height: 32),
+
+                // Nút đăng ký
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
@@ -182,6 +226,8 @@ class _RegisterPageState extends State<RegisterPage> {
                   ),
                 ),
                 const SizedBox(height: 16),
+
+                // Link sang Login
                 GestureDetector(
                   onTap: () {
                     Navigator.pushReplacement(
@@ -192,7 +238,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   child: const Text(
                     "Bạn đã có tài khoản? Đăng nhập",
                     style: TextStyle(
-                      color: AppColors.primary,
+                      color: AppColors.txtLink,
                       decoration: TextDecoration.none,
                     ),
                   ),
@@ -205,6 +251,7 @@ class _RegisterPageState extends State<RegisterPage> {
     );
   }
 
+  /// Field nhập liệu
   Widget _buildTextField(
     TextEditingController controller,
     String label,
@@ -258,6 +305,28 @@ class _RegisterPageState extends State<RegisterPage> {
           horizontal: 16,
         ),
       ),
+    );
+  }
+
+  /// Dropdown chọn giới tính
+  Widget _buildGenderField() {
+    return DropdownButtonFormField<String>(
+      value: _gender,
+      items: const [
+        DropdownMenuItem(value: 'Nam', child: Text('Nam')),
+        DropdownMenuItem(value: 'Nữ', child: Text('Nữ')),
+        DropdownMenuItem(value: 'Khác', child: Text('Khác')),
+      ],
+      decoration: InputDecoration(
+        labelText: "Giới tính",
+        prefixIcon: const Icon(Icons.male, color: AppColors.primary),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        contentPadding: const EdgeInsets.symmetric(
+          vertical: 16,
+          horizontal: 16,
+        ),
+      ),
+      onChanged: (val) => setState(() => _gender = val ?? 'Nam'),
     );
   }
 }

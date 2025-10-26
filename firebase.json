@@ -1,1 +1,39 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"gym-bay-beo","appId":"1:244266612114:android:701c9c71f47ca6c704bd4b","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"gym-bay-beo","configurations":{"android":"1:244266612114:android:701c9c71f47ca6c704bd4b","ios":"1:244266612114:ios:5a19a934985fb4b304bd4b","macos":"1:244266612114:ios:5a19a934985fb4b304bd4b","web":"1:244266612114:web:041442e43eb096f004bd4b","windows":"1:244266612114:web:4d1f2fea450a33dc04bd4b"}}}}}}
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "gym-bay-beo",
+          "appId": "1:244266612114:android:701c9c71f47ca6c704bd4b",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "gym-bay-beo",
+          "configurations": {
+            "android": "1:244266612114:android:701c9c71f47ca6c704bd4b",
+            "ios": "1:244266612114:ios:5a19a934985fb4b304bd4b",
+            "macos": "1:244266612114:ios:5a19a934985fb4b304bd4b",
+            "web": "1:244266612114:web:041442e43eb096f004bd4b",
+            "windows": "1:244266612114:web:4d1f2fea450a33dc04bd4b"
+          }
+        }
+      }
+    }
+  },
+  "hosting": {
+    "public": "public",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "/payment-result",
+        "destination": "/payment-result.html"
+      }
+    ]
+  }
+}

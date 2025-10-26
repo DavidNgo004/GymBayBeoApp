@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -7,14 +6,7 @@ import 'edit_profile_page.dart';
 import 'change_password_page.dart';
 
 class ProfilePage extends StatefulWidget {
-  final String name;
-  final String localImagePath;
-
-  const ProfilePage({
-    super.key,
-    required this.name,
-    required this.localImagePath,
-  });
+  const ProfilePage({super.key});
 
   @override
   State<ProfilePage> createState() => _ProfilePageState();
@@ -22,26 +14,34 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   final user = FirebaseAuth.instance.currentUser!;
-  Map<String, dynamic>? userData;
+  Map<String, dynamic>? ptData;
 
   @override
   void initState() {
     super.initState();
-    loadUserData();
+    loadPTData();
   }
 
-  Future<void> loadUserData() async {
-    final doc = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(user.uid)
-        .get();
-    if (mounted) {
-      setState(() {
-        userData = doc.data();
-      });
+  ///Lấy dữ liệu từ bảng 'pts'
+  Future<void> loadPTData() async {
+    try {
+      final query = await FirebaseFirestore.instance
+          .collection('pts')
+          .where('userId', isEqualTo: user.uid)
+          .limit(1)
+          .get();
+
+      if (query.docs.isNotEmpty) {
+        setState(() {
+          ptData = query.docs.first.data();
+        });
+      }
+    } catch (e) {
+      debugPrint("Lỗi khi tải dữ liệu PT: $e");
     }
   }
 
+  /// Ẩn email
   String hideEmail(String email) {
     final parts = email.split('@');
     final name = parts[0];
@@ -49,6 +49,7 @@ class _ProfilePageState extends State<ProfilePage> {
     return '${name.substring(0, 2)}***@${parts[1]}';
   }
 
+  /// Ẩn số điện thoại
   String hidePhone(String phone) {
     if (phone.length < 6) return phone;
     return '${phone.substring(0, 3)}***${phone.substring(phone.length - 3)}';
@@ -56,78 +57,59 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
-    final localImagePath = userData?['localImagePath'] ?? widget.localImagePath;
-
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Hồ sơ cá nhân'),
+        title: const Text('Hồ sơ Huấn luyện viên'),
         centerTitle: true,
-        backgroundColor: AppColors.toolbarBG,
+        backgroundColor: AppColors.primary,
         foregroundColor: AppColors.textBtn,
       ),
-      body: userData == null
+      body: ptData == null
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
               child: Column(
                 children: [
+                  /// Ảnh đại diện (Cloudinary)
                   Center(
-                    child: Stack(
-                      alignment: Alignment.bottomRight,
-                      children: [
-                        CircleAvatar(
-                          radius: 60,
-                          backgroundImage:
-                              (localImagePath != null &&
-                                  localImagePath.toString().isNotEmpty &&
-                                  File(localImagePath).existsSync())
-                              ? FileImage(File(localImagePath))
-                              : const AssetImage(
-                                      'assets/images/avatar_placeholder.png',
-                                    )
-                                    as ImageProvider,
-                        ),
-                        Positioned(
-                          bottom: 0,
-                          right: 4,
-                          child: Container(
-                            padding: const EdgeInsets.all(6),
-                            decoration: const BoxDecoration(
-                              color: Colors.white,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.camera_alt,
-                              size: 22,
-                              color: Colors.grey,
-                            ),
-                          ),
-                        ),
-                      ],
+                    child: CircleAvatar(
+                      radius: 60,
+                      backgroundImage:
+                          (ptData!['imageUrl'] != null &&
+                              ptData!['imageUrl'].toString().isNotEmpty)
+                          ? NetworkImage(ptData!['imageUrl'])
+                          : const AssetImage(
+                                  'assets/images/avatar_placeholder.png',
+                                )
+                                as ImageProvider,
                     ),
                   ),
+
                   const SizedBox(height: 20),
 
-                  _buildInfoTile('Tên', userData!['name'] ?? 'Khách hàng'),
+                  /// Thông tin PT
+                  _buildInfoTile(
+                    'Họ tên',
+                    ptData!['name'] ?? 'Huấn luyện viên',
+                  ),
                   _buildInfoTile('Email', hideEmail(user.email ?? '')),
                   _buildInfoTile(
                     'Số điện thoại',
-                    hidePhone(userData!['phone'] ?? 'Chưa có'),
+                    hidePhone(ptData!['phone'] ?? 'Chưa có'),
                   ),
                   _buildInfoTile(
-                    'Chiều cao',
-                    '${userData!['height'] ?? '—'} cm',
+                    'Kinh nghiệm',
+                    '${ptData!['experience'] ?? '—'} năm',
                   ),
+                  _buildInfoTile('Giới tính', ptData!['gender'] ?? '—'),
                   _buildInfoTile(
-                    'Cân nặng',
-                    '${userData!['weight'] ?? '—'} kg',
+                    'Mô tả bản thân',
+                    ptData!['description'] ?? '—',
                   ),
-                  _buildInfoTile(
-                    'Mục tiêu tập luyện',
-                    userData!['goal'] ?? '—',
-                  ),
+
                   const SizedBox(height: 30),
 
+                  /// Nút sửa thông tin
                   ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
@@ -138,7 +120,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                     icon: const Icon(Icons.edit, color: AppColors.textBtn),
                     label: const Text(
-                      'Thay đổi thông tin',
+                      'Chỉnh sửa hồ sơ',
                       style: TextStyle(fontSize: 16, color: AppColors.textBtn),
                     ),
                     onPressed: () async {
@@ -149,13 +131,15 @@ class _ProfilePageState extends State<ProfilePage> {
                         ),
                       );
                       if (result == true) {
-                        await loadUserData();
-                        Navigator.pop(context, true); // 🔄 báo về Home reload
+                        setState(() => ptData = null);
+                        await loadPTData();
                       }
                     },
                   ),
+
                   const SizedBox(height: 10),
 
+                  /// Nút đổi mật khẩu
                   OutlinedButton.icon(
                     style: OutlinedButton.styleFrom(
                       minimumSize: const Size(double.infinity, 50),
@@ -163,10 +147,13 @@ class _ProfilePageState extends State<ProfilePage> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    icon: const Icon(Icons.lock_outline),
+                    icon: const Icon(
+                      Icons.lock_outline,
+                      color: AppColors.primary,
+                    ),
                     label: const Text(
                       'Đổi mật khẩu',
-                      style: TextStyle(fontSize: 16),
+                      style: TextStyle(fontSize: 16, color: AppColors.primary),
                     ),
                     onPressed: () {
                       Navigator.push(
@@ -193,6 +180,7 @@ class _ProfilePageState extends State<ProfilePage> {
         subtitle: Text(
           value,
           style: const TextStyle(fontSize: 15),
+          maxLines: 3,
           overflow: TextOverflow.ellipsis,
         ),
       ),

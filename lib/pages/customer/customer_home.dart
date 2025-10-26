@@ -1,10 +1,19 @@
-import 'dart:io';
-import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../conf/app_colors.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:gym_bay_beo/conf/app_colors.dart';
+import 'package:gym_bay_beo/widgets/app_notification.dart';
 import 'package:gym_bay_beo/widgets/confirm_logout_dialog.dart';
-import 'package:gym_bay_beo/pages/customer/profile_page.dart';
+import 'package:gym_bay_beo/pages/customer/profile/profile_page.dart';
+import 'package:gym_bay_beo/pages/customer/package/packages_page.dart';
+import 'package:gym_bay_beo/pages/customer/workout_schedule_page.dart';
+import 'package:gym_bay_beo/pages/customer/checkin_page.dart';
+import 'package:gym_bay_beo/pages/customer/progress_page.dart';
+import 'package:gym_bay_beo/pages/customer/pt/pt_list_page.dart';
+import 'package:gym_bay_beo/pages/customer/notification_page.dart';
+import 'package:gym_bay_beo/services/notification_service.dart';
 
 class CustomerHomePage extends StatefulWidget {
   const CustomerHomePage({super.key});
@@ -13,135 +22,254 @@ class CustomerHomePage extends StatefulWidget {
   State<CustomerHomePage> createState() => _CustomerHomePageState();
 }
 
-class _CustomerHomePageState extends State<CustomerHomePage> {
+class _CustomerHomePageState extends State<CustomerHomePage>
+    with TickerProviderStateMixin {
   int _selectedIndex = 0;
   String? userName;
-  String? localImagePath;
+  String? imageUrl;
+  bool hasPT = false;
+  String? ptId;
+  late final PageController _pageController;
+  StreamSubscription? _chatNotifSub;
 
   @override
   void initState() {
     super.initState();
+    _pageController = PageController();
     _fetchUserInfo();
+    _listenNotification();
+    _listenForNewChatNotifications(); // ✅ Thêm phần thông báo tin nhắn
+    _checkTodayWorkout();
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    _chatNotifSub?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _checkTodayWorkout() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      await NotificationService().checkWorkoutScheduleAndNotify(user.uid);
+    }
   }
 
   Future<void> _fetchUserInfo() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
       final doc = await FirebaseFirestore.instance
-          .collection('users')
+          .collection('customers')
           .doc(user.uid)
           .get();
+
       if (doc.exists) {
         setState(() {
-          userName = doc.data()?['name'];
-          localImagePath = doc.data()?['localImagePath'];
+          userName = doc.data()?['name'] ?? "Người dùng";
+          imageUrl = doc.data()?['imageUrl'];
+          ptId = doc.data()?['ptId'];
+          hasPT = ptId != null && ptId!.isNotEmpty;
         });
       }
     }
   }
 
-  void _onItemTapped(int index) async {
-    if (index == 3) {
-      await showLogoutConfirmDialog(context);
-    } else {
-      setState(() {
-        _selectedIndex = index;
-      });
-    }
+  /// 🧠 Lắng nghe các thông báo chung (như lịch tập, tiến trình,...)
+  void _listenNotification() {
+    final userId = FirebaseAuth.instance.currentUser!.uid;
+    FirebaseFirestore.instance
+        .collection('notifications')
+        .where('userId', isEqualTo: userId)
+        .where('isShown', isEqualTo: false)
+        .orderBy('createdAt', descending: false)
+        .snapshots()
+        .listen((snapshot) async {
+          for (var docChange in snapshot.docChanges) {
+            if (docChange.type == DocumentChangeType.added) {
+              final data = docChange.doc.data();
+              if (data == null) continue;
+
+              final title = data['title'] ?? "Thông báo mới";
+              final body = data['body'] ?? "";
+
+              HapticFeedback.mediumImpact();
+              showAppNotification(context, "$title: $body");
+
+              await docChange.doc.reference.update({'isShown': true});
+            }
+          }
+        });
   }
+
+  /// 💬 Lắng nghe realtime tin nhắn mới từ PT
+  void _listenForNewChatNotifications() {
+    final userId = FirebaseAuth.instance.currentUser!.uid;
+
+    _chatNotifSub = FirebaseFirestore.instance
+        .collection('notifications')
+        .where('userId', isEqualTo: userId)
+        .where('type', isEqualTo: 'chat')
+        .where('isRead', isEqualTo: false)
+        .orderBy('createdAt', descending: false)
+        .snapshots()
+        .listen((snapshot) async {
+          for (var change in snapshot.docChanges) {
+            if (change.type == DocumentChangeType.added) {
+              final data = change.doc.data();
+              if (data == null) continue;
+
+              final ptName = data['ptName'] ?? 'Huấn luyện viên của bạn';
+              final body = data['body'] ?? '';
+
+              HapticFeedback.mediumImpact();
+              showAppNotification(
+                context,
+                "💬 $ptName: $body",
+                color: AppColors.primary,
+              );
+
+              // Cập nhật isRead = true sau khi hiển thị (tránh lặp lại)
+              try {
+                await change.doc.reference.update({'isRead': true});
+              } catch (e) {
+                debugPrint('Lỗi khi cập nhật isRead: $e');
+              }
+            }
+          }
+        });
+  }
+
+  List<Widget> get _pages => [
+    _buildHomeContent(context),
+    const WorkoutSchedulePage(),
+    const ProgressPage(),
+    const CheckinPage(),
+  ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Colors.grey[50],
       appBar: AppBar(
+        elevation: 0,
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
         title: Text(
-          userName != null ? "Xin chào, $userName" : "Xin chào...",
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+          userName != null ? "Xin chào, $userName 👋" : "Xin chào...",
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 20,
+            color: AppColors.primary,
+          ),
         ),
-        backgroundColor: AppColors.toolbarBG,
-        foregroundColor: AppColors.textBtn,
-        elevation: 2,
         actions: [
+          // 🔔 Icon thông báo
+          StreamBuilder(
+            stream: FirebaseFirestore.instance
+                .collection('notifications')
+                .where(
+                  'userId',
+                  isEqualTo: FirebaseAuth.instance.currentUser!.uid,
+                )
+                .where('isRead', isEqualTo: false)
+                .snapshots(),
+            builder: (context, snapshot) {
+              int unread = snapshot.data?.docs.length ?? 0;
+
+              return Stack(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.notifications_none),
+                    onPressed: () async {
+                      final result = await Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const NotificationPage(),
+                        ),
+                      );
+                      if (result == 'go_to_schedule') {
+                        setState(() => _selectedIndex = 1);
+                        _pageController.jumpToPage(1);
+                      }
+                    },
+                  ),
+                  if (unread > 0)
+                    Positioned(
+                      right: 10,
+                      top: 10,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Text(
+                          unread > 9 ? "9+" : unread.toString(),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              );
+            },
+          ),
+
+          // Avatar người dùng
           GestureDetector(
             onTap: () async {
-              final updated = await Navigator.push(
+              await Navigator.of(
                 context,
-                MaterialPageRoute(
-                  builder: (context) => ProfilePage(
-                    name: userName ?? '',
-                    localImagePath: localImagePath ?? '',
-                  ),
-                ),
-              );
-              if (updated == true) {
-                _fetchUserInfo(); // 🔄 Cập nhật lại sau khi chỉnh sửa
-              }
+              ).push(_createRoute(const ProfilePage()));
+              _fetchUserInfo(); // reload khi quay về
             },
             child: Padding(
-              padding: const EdgeInsets.only(right: 12.0),
-              child: CircleAvatar(
-                radius: 20,
-                backgroundColor: Colors.grey[300],
-                backgroundImage:
-                    (localImagePath != null &&
-                        localImagePath!.isNotEmpty &&
-                        File(localImagePath!).existsSync())
-                    ? FileImage(File(localImagePath!))
-                    : const AssetImage('assets/images/avatar_placeholder.png')
-                          as ImageProvider,
+              padding: const EdgeInsets.only(right: 14.0),
+              child: Hero(
+                tag: 'user-avatar',
+                child: CircleAvatar(
+                  radius: 22,
+                  backgroundColor: Colors.grey[300],
+                  backgroundImage: (imageUrl != null && imageUrl!.isNotEmpty)
+                      ? NetworkImage(imageUrl!)
+                      : const AssetImage('assets/images/avatar_placeholder.png')
+                            as ImageProvider,
+                ),
               ),
             ),
           ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
-              ),
-              clipBehavior: Clip.hardEdge,
-              child: Image.network(
-                "https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExbDJrY3oxYWpybmFsbm02N2Z3dWtxZjN0a2ZuaXptMThnNjM3MDZqYyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/DtkOAxWAFUkCI/giphy.gif",
-                height: 300,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Expanded(
-              child: GridView.count(
-                crossAxisCount: 2,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-                children: [
-                  _buildMenuCard(Icons.fitness_center, "Gói tập", () {}),
-                  _buildMenuCard(Icons.calendar_today, "Lịch tập", () {}),
-                  _buildMenuCard(Icons.qr_code_scanner, "Check-in", () {}),
-                  _buildMenuCard(Icons.show_chart, "Tiến trình", () {}),
-                ],
-              ),
-            ),
-          ],
-        ),
+      body: PageView(
+        controller: _pageController,
+        physics: const NeverScrollableScrollPhysics(),
+        children: _pages,
       ),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         currentIndex: _selectedIndex,
-        onTap: _onItemTapped,
+        onTap: (index) async {
+          if (index == 3) {
+            await showLogoutConfirmDialog(context);
+          } else {
+            _navigateTo(index);
+          }
+        },
         selectedItemColor: AppColors.secondary,
-        unselectedItemColor: AppColors.unSelectedItem,
-        backgroundColor: AppColors.toolbarBG,
+        unselectedItemColor: AppColors.primary,
+        backgroundColor: Colors.white,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: "Trang chủ"),
           BottomNavigationBarItem(
-            icon: Icon(Icons.fitness_center),
-            label: "Gói tập",
-          ),
-          BottomNavigationBarItem(
             icon: Icon(Icons.calendar_today),
             label: "Lịch tập",
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.show_chart),
+            label: "Tiến trình",
           ),
           BottomNavigationBarItem(icon: Icon(Icons.logout), label: "Đăng xuất"),
         ],
@@ -149,27 +277,163 @@ class _CustomerHomePageState extends State<CustomerHomePage> {
     );
   }
 
-  Widget _buildMenuCard(IconData icon, String title, VoidCallback onTap) {
+  Route _createRoute(Widget page) {
+    return PageRouteBuilder(
+      transitionDuration: const Duration(milliseconds: 350),
+      pageBuilder: (context, animation, secondaryAnimation) => page,
+      transitionsBuilder: (context, animation, secondary, child) {
+        final slide = Tween<Offset>(
+          begin: const Offset(0.2, 0),
+          end: Offset.zero,
+        ).animate(CurvedAnimation(parent: animation, curve: Curves.easeInOut));
+        return FadeTransition(
+          opacity: animation,
+          child: SlideTransition(position: slide, child: child),
+        );
+      },
+    );
+  }
+
+  void _navigateTo(int index) {
+    setState(() => _selectedIndex = index);
+    _pageController.animateToPage(
+      index,
+      duration: const Duration(milliseconds: 350),
+      curve: Curves.easeInOut,
+    );
+  }
+
+  Widget _buildHomeContent(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.shadowTotoro.withOpacity(0.08),
+                  blurRadius: 10,
+                  offset: const Offset(0, 5),
+                ),
+              ],
+            ),
+            clipBehavior: Clip.hardEdge,
+            child: Image.network(
+              "https://media3.giphy.com/media/DtkOAxWAFUkCI/giphy.gif",
+              height: 275,
+              width: double.infinity,
+              fit: BoxFit.cover,
+            ),
+          ),
+          const SizedBox(height: 24),
+          const Text(
+            "Tính năng của bạn",
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: AppColors.primary,
+            ),
+          ),
+          const SizedBox(height: 16),
+          GridView.count(
+            physics: const NeverScrollableScrollPhysics(),
+            shrinkWrap: true,
+            crossAxisCount: 2,
+            crossAxisSpacing: 16,
+            mainAxisSpacing: 16,
+            children: [
+              _buildMenuCard(
+                Icons.fitness_center_rounded,
+                "Gói tập",
+                Colors.blueAccent,
+                () {
+                  Navigator.of(
+                    context,
+                  ).push(_createRoute(PackagesPage(userId: user!.uid)));
+                },
+              ),
+              _buildMenuCard(
+                Icons.calendar_today_rounded,
+                "Lịch tập",
+                Colors.orangeAccent,
+                () => _navigateTo(1),
+              ),
+              _buildMenuCard(
+                Icons.qr_code_scanner_rounded,
+                "Check-in",
+                Colors.teal,
+                () => _navigateTo(3),
+              ),
+              _buildMenuCard(
+                Icons.show_chart_rounded,
+                "Tiến trình",
+                Colors.purpleAccent,
+                () => _navigateTo(2),
+              ),
+              _buildMenuCard(
+                Icons.people_alt_rounded,
+                "Huấn luyện viên",
+                Colors.limeAccent,
+                () => Navigator.of(
+                  context,
+                ).push(_createRoute(const PTListPage())),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMenuCard(
+    IconData icon,
+    String title,
+    Color color,
+    VoidCallback onTap,
+  ) {
     return GestureDetector(
-      onTap: onTap,
-      child: Card(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        elevation: 5,
-        shadowColor: Colors.black26,
+      onTap: () {
+        HapticFeedback.selectionClick();
+        onTap();
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: color.withOpacity(0.2),
+              blurRadius: 12,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
         child: InkWell(
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(20),
+          splashColor: color.withOpacity(0.1),
           onTap: onTap,
-          child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
             child: Column(
-              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(icon, size: 50, color: AppColors.toolbarBG),
-                const SizedBox(height: 12),
+                CircleAvatar(
+                  backgroundColor: color.withOpacity(0.15),
+                  radius: 30,
+                  child: Icon(icon, size: 32, color: color),
+                ),
+                const SizedBox(height: 14),
                 Text(
                   title,
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
+                    color: AppColors.primary,
                   ),
                 ),
               ],

@@ -4,7 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:gym_bay_beo/conf/app_colors.dart';
-import 'package:path_provider/path_provider.dart';
+import '../../../services/cloudinary_customer.dart'; // có hàm upload & delete ảnh
 
 class EditProfilePage extends StatefulWidget {
   const EditProfilePage({super.key});
@@ -20,76 +20,130 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
   String? _name;
   String? _phone;
+  String? _gender;
   String? _goal;
   String? _height;
   String? _weight;
-  String? _localImagePath;
+  String? _imageUrl; // URL hiện tại trên Cloudinary
+  File? _newImageFile; // Ảnh mới vừa chọn, chưa upload
 
   @override
   void initState() {
     super.initState();
-    loadUserData();
+    loadCustomerData();
   }
 
-  Future<void> loadUserData() async {
+  /// Lấy dữ liệu từ Firestore
+  Future<void> loadCustomerData() async {
     final doc = await FirebaseFirestore.instance
-        .collection('users')
+        .collection('customers')
         .doc(user.uid)
         .get();
     final data = doc.data();
-
     if (mounted && data != null) {
       setState(() {
         _name = data['name'];
         _phone = data['phone'];
+        _gender = data['gender'];
         _goal = data['goal'];
         _height = data['height']?.toString();
         _weight = data['weight']?.toString();
-        _localImagePath = data['localImagePath'];
+        _imageUrl = data['imageUrl'];
       });
     }
   }
 
+  /// Chọn ảnh từ thư viện, chỉ hiển thị tạm trên UI
   Future<void> pickImage() async {
     final picked = await picker.pickImage(source: ImageSource.gallery);
     if (picked == null) return;
 
-    final dir = await getApplicationDocumentsDirectory();
-    final file = File(
-      '${dir.path}/${DateTime.now().millisecondsSinceEpoch}.png',
-    );
-    await File(picked.path).copy(file.path);
-
     setState(() {
-      _localImagePath = file.path;
+      _newImageFile = File(picked.path);
     });
   }
 
+  /// Upload ảnh mới (nếu có) & xóa ảnh cũ (nếu có)
+  /// Upload ảnh mới (nếu có) & xóa ảnh cũ (nếu có)
+  Future<String?> _handleImageUpload() async {
+    // Không có ảnh mới → giữ nguyên URL cũ
+    if (_newImageFile == null) return _imageUrl;
+
+    String? newUrl;
+
+    try {
+      // Nếu có ảnh cũ trên Cloudinary → xóa
+      if (_imageUrl != null && _imageUrl!.contains('res.cloudinary.com')) {
+        try {
+          await CloudinaryService.deleteImage(_imageUrl!);
+          debugPrint('Ảnh cũ đã được xóa khỏi Cloudinary');
+        } catch (e) {
+          debugPrint('Không thể xóa ảnh cũ: $e');
+        }
+      }
+
+      // Upload ảnh mới
+      newUrl = await CloudinaryService.uploadImage(_newImageFile!.path);
+      debugPrint('Ảnh mới đã upload: $newUrl');
+    } catch (e) {
+      debugPrint('Lỗi upload ảnh: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Không thể tải ảnh lên. Vui lòng thử lại.'),
+        ),
+      );
+    }
+
+    return newUrl ?? _imageUrl;
+  }
+
+  /// Lưu thông tin vào Firestore
   Future<void> saveProfile() async {
     if (!_formKey.currentState!.validate()) return;
     _formKey.currentState!.save();
 
-    await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
-      'name': _name,
-      'phone': _phone,
-      'goal': _goal,
-      'height': _height,
-      'weight': _weight,
-      'localImagePath': _localImagePath,
-    });
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Đang lưu thay đổi...')));
+
+    // Nếu có ảnh mới → xử lý upload
+    final newUrl = await _handleImageUpload();
+
+    await FirebaseFirestore.instance
+        .collection('customers')
+        .doc(user.uid)
+        .update({
+          'name': _name,
+          'phone': _phone,
+          'gender': _gender,
+          'goal': _goal,
+          'height': _height,
+          'weight': _weight,
+          'imageUrl': newUrl,
+        });
 
     if (mounted) {
-      Navigator.pop(context, true); // báo cho ProfilePage reload lại
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Lưu thành công!')));
+      Navigator.pop(context, true);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final imageProvider = _newImageFile != null
+        ? FileImage(_newImageFile!)
+        : (_imageUrl != null && _imageUrl!.isNotEmpty
+              ? NetworkImage(_imageUrl!)
+              : const AssetImage('assets/images/avatar_placeholder.png')
+                    as ImageProvider);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Chỉnh sửa hồ sơ'),
         centerTitle: true,
-        backgroundColor: AppColors.toolbarBG,
+        backgroundColor: AppColors.primary,
         foregroundColor: AppColors.textBtn,
       ),
       body: _name == null
@@ -106,15 +160,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                         children: [
                           CircleAvatar(
                             radius: 60,
-                            backgroundImage:
-                                (_localImagePath != null &&
-                                    _localImagePath!.isNotEmpty &&
-                                    File(_localImagePath!).existsSync())
-                                ? FileImage(File(_localImagePath!))
-                                : const AssetImage(
-                                        'assets/images/avatar_placeholder.png',
-                                      )
-                                      as ImageProvider,
+                            backgroundImage: imageProvider,
                           ),
                           Positioned(
                             bottom: 0,
@@ -139,7 +185,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
                       ),
                     ),
                     const SizedBox(height: 20),
-
                     _buildTextField(
                       label: 'Họ và tên',
                       initialValue: _name,
@@ -173,8 +218,28 @@ class _EditProfilePageState extends State<EditProfilePage> {
                       initialValue: _goal,
                       onSaved: (val) => _goal = val,
                     ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      child: DropdownButtonFormField<String>(
+                        value: _gender ?? 'Khác',
+                        decoration: InputDecoration(
+                          labelText: 'Giới tính',
+                          filled: true,
+                          fillColor: Colors.grey[100],
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        items: const [
+                          DropdownMenuItem(value: 'Nam', child: Text('Nam')),
+                          DropdownMenuItem(value: 'Nữ', child: Text('Nữ')),
+                          DropdownMenuItem(value: 'Khác', child: Text('Khác')),
+                        ],
+                        onChanged: (val) => setState(() => _gender = val),
+                        onSaved: (val) => _gender = val,
+                      ),
+                    ),
                     const SizedBox(height: 30),
-
                     ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,

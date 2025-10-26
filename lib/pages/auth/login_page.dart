@@ -43,8 +43,12 @@ class _LoginPageState extends State<LoginPage> {
     } on FirebaseAuthException {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Tên đăng nhập hoặc mật khẩu không đúng"),
+          SnackBar(
+            content: Text(
+              "Tên đăng nhập hoặc mật khẩu không đúng",
+              style: TextStyle(color: AppColors.txtError),
+            ),
+            backgroundColor: AppColors.error,
           ),
         );
       }
@@ -79,29 +83,53 @@ class _LoginPageState extends State<LoginPage> {
       UserCredential userCredential = await FirebaseAuth.instance
           .signInWithCredential(credential);
 
-      final docRef = FirebaseFirestore.instance
-          .collection('users')
-          .doc(userCredential.user!.uid);
-
+      final uid = userCredential.user!.uid;
+      final docRef = FirebaseFirestore.instance.collection('users').doc(uid);
       final doc = await docRef.get();
+
+      // Nếu user chưa tồn tại trong Firestore
       if (!doc.exists) {
         await docRef.set({
+          "uid": uid,
           "name": googleUser.displayName ?? "Google User",
           "email": googleUser.email,
           "phone": "",
+          "gender": "Khác",
           "role": "customer",
           "createdAt": FieldValue.serverTimestamp(),
+        });
+
+        // Thêm dữ liệu vào bảng customers
+        await FirebaseFirestore.instance.collection('customers').doc(uid).set({
+          'createdAt': FieldValue.serverTimestamp(),
+          'uid': uid,
+          'email': googleUser.email,
+          'goal': '',
+          'height': '',
+          'weight': '',
+          'imageUrl':
+              userCredential.user?.photoURL ??
+              'https://res.cloudinary.com/drzg13ngi/image/upload/v1760013365/gymbaybeo/35_kdnpv7.jpg',
+          'name': googleUser.displayName ?? "Google User",
+          'phone': '',
+          'gender': 'Khác',
         });
       }
 
       if (mounted) {
-        await _navigateByRole(userCredential.user!.uid);
+        await _navigateByRole(uid);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text("Lỗi Google Sign-In: $e")));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              "Lỗi Google Sign-In: $e",
+              style: TextStyle(color: AppColors.txtError),
+            ),
+            backgroundColor: AppColors.error,
+          ),
+        );
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -117,13 +145,16 @@ class _LoginPageState extends State<LoginPage> {
 
     if (!mounted) return;
 
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text("Đăng nhập thành công!")));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("Đăng nhập thành công!"),
+        backgroundColor: AppColors.success,
+      ),
+    );
 
     Widget nextPage;
     if (role == 'admin') {
-      nextPage = const AdminHomePage();
+      nextPage = AdminHomePage();
     } else if (role == 'pt') {
       nextPage = const PTHomePage();
     } else {
@@ -151,12 +182,20 @@ class _LoginPageState extends State<LoginPage> {
                 Image.asset('assets/images/logo.png', height: 180),
                 const Text(
                   "Gym Bay Béo",
-                  style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primary,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 const Text(
                   "Đăng nhập để bắt đầu luyện tập ",
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.w500),
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.primary,
+                  ),
                 ),
                 const SizedBox(height: 30),
 
@@ -192,7 +231,7 @@ class _LoginPageState extends State<LoginPage> {
                     },
                     child: const Text(
                       "Quên mật khẩu?",
-                      style: TextStyle(color: AppColors.primary),
+                      style: TextStyle(color: AppColors.txtLink),
                     ),
                   ),
                 ),
@@ -252,7 +291,7 @@ class _LoginPageState extends State<LoginPage> {
                   child: const Text(
                     "Bạn chưa có tài khoản? Đăng ký",
                     style: TextStyle(
-                      color: AppColors.primary,
+                      color: AppColors.txtLink,
                       decoration: TextDecoration.none,
                     ),
                   ),
@@ -268,7 +307,7 @@ class _LoginPageState extends State<LoginPage> {
                   child: const Text(
                     "Quay về trang chủ",
                     style: TextStyle(
-                      color: AppColors.primary,
+                      color: AppColors.txtLink,
                       decoration: TextDecoration.none,
                     ),
                   ),

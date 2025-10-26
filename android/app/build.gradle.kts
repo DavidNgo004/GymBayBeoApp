@@ -13,6 +13,8 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+        // bật desugaring
+        isCoreLibraryDesugaringEnabled = true
     }
 
     kotlinOptions {
@@ -38,4 +40,7 @@ flutter {
     source = "../.."
 }
 
-// ⚡ Lưu ý: nhớ đặt file google-services.json vào thư mục android/app/
+dependencies {
+    // Thư viện để hỗ trợ desugaring
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
+}
