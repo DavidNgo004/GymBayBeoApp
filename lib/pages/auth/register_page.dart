@@ -74,6 +74,9 @@ class _RegisterPageState extends State<RegisterPage> {
       // =========================
       // Lưu thêm vào bảng "customers"
       // =========================
+      // =========================
+      // Lưu thêm vào bảng "customers"
+      // =========================
       await FirebaseFirestore.instance.collection('customers').doc(uid).set({
         'createdAt': FieldValue.serverTimestamp(),
         'uid': uid,
@@ -86,6 +89,12 @@ class _RegisterPageState extends State<RegisterPage> {
         'name': name,
         'phone': phone,
         'gender': _gender,
+
+        //Thông tin phục vụ QR Check-in
+        'qrCode': uid, // UID phục vụ quét QR
+        'totalDays': 0, // Số ngày tập tổng
+        'monthDays': 0, // Số ngày tập trong tháng
+        'lastCheckinMonth': DateTime.now().month, // Theo dõi để reset mỗi tháng
       });
 
       ScaffoldMessenger.of(
