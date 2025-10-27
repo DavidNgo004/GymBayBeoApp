@@ -1,8 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:gym_bay_beo/conf/app_colors.dart';
 import 'package:qr_flutter/qr_flutter.dart';
-import 'package:gym_bay_beo/pages/customer/checkin_history_page.dart';
+import 'package:gym_bay_beo/pages/customer/check-in/checkin_history_page.dart';
 
 class CheckinPage extends StatefulWidget {
   const CheckinPage({super.key});
@@ -53,7 +54,12 @@ class _CheckinPageState extends State<CheckinPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("QR Check-in"), centerTitle: true),
+      appBar: AppBar(
+        title: const Text("QR Check-in"),
+        centerTitle: true,
+        backgroundColor: AppColors.primary,
+        foregroundColor: AppColors.textPrimary,
+      ),
       body: loading
           ? const Center(child: CircularProgressIndicator())
           : Center(
@@ -95,7 +101,8 @@ class _CheckinPageState extends State<CheckinPage> {
                   /// ✅ Nút chuyển sang lịch sử check-in
                   ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.teal,
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: AppColors.textPrimary,
                       padding: const EdgeInsets.symmetric(
                         horizontal: 20,
                         vertical: 14,

@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:gym_bay_beo/pages/admin/check-in/admin_checkin_page.dart';
 import 'package:gym_bay_beo/pages/admin/admin_home.dart';
-import 'package:gym_bay_beo/pages/admin/pakages_admin_page.dart';
+import 'package:gym_bay_beo/pages/admin/package-management/pakages_admin_page.dart';
 import 'package:gym_bay_beo/pages/customer/customer_home.dart';
 import 'package:gym_bay_beo/pages/home_page.dart';
 import 'package:gym_bay_beo/models/admin_account.dart';
-import 'package:gym_bay_beo/pages/admin/pt_management_page.dart';
+import 'package:gym_bay_beo/pages/admin/pt-management/pt_management_page.dart';
 import 'package:gym_bay_beo/pages/admin/customers/admin_customers_page.dart';
 import 'package:webview_flutter_android/webview_flutter_android.dart';
 import 'package:webview_flutter/webview_flutter.dart';
@@ -54,6 +55,7 @@ class MyApp extends StatelessWidget {
         '/admin/packages': (c) => const PackagesAdminPage(),
         '/admin/pts': (context) => const PTManagementPage(),
         '/admin/customers': (context) => const AdminCustomersPage(),
+        '/admin/checkin': (context) => AdminCheckinPage(),
         "/customerHome": (_) => const CustomerHomePage(),
       },
     );

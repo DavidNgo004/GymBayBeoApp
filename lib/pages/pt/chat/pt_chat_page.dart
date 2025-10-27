@@ -82,7 +82,7 @@ class _PTChatPageState extends State<PTChatPage> {
           'isRead': false,
           'type': 'chat',
           'chatId': widget.chatId,
-          'ptId': chatPtId, // ✅ Lưu đúng id PT trong chat
+          'ptId': chatPtId,
           'ptName': ptData['name'] ?? '',
           'ptAvatar': ptData['imageUrl'] ?? '',
           'createdAt': FieldValue.serverTimestamp(),

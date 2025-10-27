@@ -113,6 +113,13 @@ class _LoginPageState extends State<LoginPage> {
           'name': googleUser.displayName ?? "Google User",
           'phone': '',
           'gender': 'Khác',
+
+          //Thông tin phục vụ QR Check-in
+          'qrCode': uid, // UID phục vụ quét QR
+          'totalDays': 0, // Số ngày tập tổng
+          'monthDays': 0, // Số ngày tập trong tháng
+          'lastCheckinMonth':
+              DateTime.now().month, // Theo dõi để reset mỗi tháng
         });
       }
 

@@ -1,8 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../../conf/app_colors.dart';
-import 'chat/pt_chat_page.dart';
+import '../../../../conf/app_colors.dart';
+import '../chat/pt_chat_page.dart';
 
 class PTNotificationPage extends StatefulWidget {
   final String? ptId;
@@ -95,14 +95,14 @@ class _PTNotificationPageState extends State<PTNotificationPage> {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
+        backgroundColor: AppColors.primary,
+        foregroundColor: AppColors.textBtn,
         title: const Text(
           "Thông báo của bạn",
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
-        backgroundColor: Colors.white,
         elevation: 2,
-        iconTheme: const IconThemeData(color: Colors.black),
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance

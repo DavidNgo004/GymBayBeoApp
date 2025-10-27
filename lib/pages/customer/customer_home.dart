@@ -8,11 +8,11 @@ import 'package:gym_bay_beo/widgets/app_notification.dart';
 import 'package:gym_bay_beo/widgets/confirm_logout_dialog.dart';
 import 'package:gym_bay_beo/pages/customer/profile/profile_page.dart';
 import 'package:gym_bay_beo/pages/customer/package/packages_page.dart';
-import 'package:gym_bay_beo/pages/customer/workout_schedule_page.dart';
-import 'package:gym_bay_beo/pages/customer/checkin_page.dart';
-import 'package:gym_bay_beo/pages/customer/progress_page.dart';
+import 'package:gym_bay_beo/pages/customer/schedule/workout_schedule_page.dart';
+import 'package:gym_bay_beo/pages/customer/check-in/checkin_page.dart';
+import 'package:gym_bay_beo/pages/customer/progress/progress_page.dart';
 import 'package:gym_bay_beo/pages/customer/pt/pt_list_page.dart';
-import 'package:gym_bay_beo/pages/customer/notification_page.dart';
+import 'package:gym_bay_beo/pages/customer/notification/notification_page.dart';
 import 'package:gym_bay_beo/services/notification_service.dart';
 
 class CustomerHomePage extends StatefulWidget {
@@ -140,13 +140,15 @@ class _CustomerHomePageState extends State<CustomerHomePage>
         });
   }
 
+  // --- Danh sách các trang ---
   List<Widget> get _pages => [
     _buildHomeContent(context),
     const WorkoutSchedulePage(),
-    const ProgressPage(),
     const CheckinPage(),
+    const ProgressPage(),
   ];
 
+  // --- Bottom Navigation Bar ---
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -252,7 +254,8 @@ class _CustomerHomePageState extends State<CustomerHomePage>
         type: BottomNavigationBarType.fixed,
         currentIndex: _selectedIndex,
         onTap: (index) async {
-          if (index == 3) {
+          if (index == 4) {
+            // Đăng xuất
             await showLogoutConfirmDialog(context);
           } else {
             _navigateTo(index);
@@ -266,6 +269,10 @@ class _CustomerHomePageState extends State<CustomerHomePage>
           BottomNavigationBarItem(
             icon: Icon(Icons.calendar_today),
             label: "Lịch tập",
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.qr_code_scanner_rounded),
+            label: "Check-in",
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.show_chart),
@@ -366,13 +373,13 @@ class _CustomerHomePageState extends State<CustomerHomePage>
                 Icons.qr_code_scanner_rounded,
                 "Check-in",
                 Colors.teal,
-                () => _navigateTo(3),
+                () => _navigateTo(2),
               ),
               _buildMenuCard(
                 Icons.show_chart_rounded,
                 "Tiến trình",
                 Colors.purpleAccent,
-                () => _navigateTo(2),
+                () => _navigateTo(3),
               ),
               _buildMenuCard(
                 Icons.people_alt_rounded,

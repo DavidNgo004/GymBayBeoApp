@@ -1,12 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:gym_bay_beo/pages/customer/check-in/checkin_history_page.dart';
 import 'package:intl/intl.dart';
 import 'package:gym_bay_beo/conf/app_colors.dart';
 import 'package:gym_bay_beo/pages/customer/package/packages_page.dart';
-import 'package:gym_bay_beo/pages/customer/workout_schedule_page.dart';
-import 'package:gym_bay_beo/pages/customer/progress_page.dart';
-import 'package:gym_bay_beo/pages/customer/checkin_page.dart';
+import 'package:gym_bay_beo/pages/customer/schedule/workout_schedule_page.dart';
+import 'package:gym_bay_beo/pages/customer/progress/progress_page.dart';
+import 'package:gym_bay_beo/pages/customer/check-in/checkin_page.dart';
 import 'package:gym_bay_beo/pages/customer/pt/pt_list_page.dart';
 import 'package:gym_bay_beo/pages/customer/pt/chat_with_pt_page.dart';
 
@@ -46,7 +47,7 @@ class NotificationPage extends StatelessWidget {
     } else if (type == 'checkin') {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => const CheckinPage()),
+        MaterialPageRoute(builder: (_) => const CheckinHistoryPage()),
       );
     } else if (type == 'pt_request') {
       Navigator.push(
@@ -120,8 +121,8 @@ class NotificationPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        backgroundColor: AppColors.primary,
+        foregroundColor: AppColors.textPrimary,
         title: const Text(
           "Thông báo",
           style: TextStyle(fontWeight: FontWeight.bold),

@@ -1,8 +1,8 @@
 // lib/pages/admin/packages_admin_page.dart
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../models/package_model.dart';
-import '../../services/firestore_service.dart';
+import '../../../models/package_model.dart';
+import '../../../services/firestore_service.dart';
 import 'package:gym_bay_beo/conf/app_colors.dart';
 
 class PackagesAdminPage extends StatefulWidget {

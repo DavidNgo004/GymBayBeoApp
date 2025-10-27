@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gym_bay_beo/conf/app_colors.dart';
 import 'package:gym_bay_beo/pages/pt/chat/pt_chat_page.dart';
-import 'package:gym_bay_beo/pages/pt/pt_student_schedule_page.dart';
+import 'package:gym_bay_beo/pages/pt/students/pt_student_schedule_page.dart';
 import 'student_info_row.dart';
 
 class StudentDetailPage extends StatelessWidget {

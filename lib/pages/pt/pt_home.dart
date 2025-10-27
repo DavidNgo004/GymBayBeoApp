@@ -5,7 +5,7 @@ import 'package:gym_bay_beo/pages/pt/profile/profile_page.dart';
 import 'package:gym_bay_beo/widgets/confirm_logout_dialog.dart';
 import 'package:gym_bay_beo/conf/app_colors.dart';
 import 'students/pt_home_tab.dart';
-import 'pt_notification_page.dart'; // Trang thông báo của PT
+import 'notification/pt_notification_page.dart';
 
 class PTHomePage extends StatefulWidget {
   const PTHomePage({Key? key}) : super(key: key);
@@ -18,6 +18,7 @@ class _PTHomePageState extends State<PTHomePage> {
   final user = FirebaseAuth.instance.currentUser;
   int _selectedIndex = 0;
   String? imageUrl;
+  String ptName = "";
   String? ptDocId;
 
   @override
@@ -34,47 +35,17 @@ class _PTHomePageState extends State<PTHomePage> {
         .get();
 
     if (snapshot.docs.isNotEmpty) {
-      final doc = snapshot.docs.first;
+      final data = snapshot.docs.first.data();
       setState(() {
-        imageUrl = doc['imageUrl'];
-        ptDocId = doc.id;
+        imageUrl = data['imageUrl'];
+        ptDocId = snapshot.docs.first.id;
+        ptName = data['name'] ?? "";
       });
     }
   }
 
-  void _onItemTapped(int index) {
-    if (index == 3) {
-      showLogoutConfirmDialog(context);
-      return;
-    } else if (index == 2) {
-      if (ptDocId != null) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => PTNotificationPage(ptId: ptDocId)),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Chưa xác định được thông tin PT")),
-        );
-      }
-      return;
-    }
-
-    setState(() => _selectedIndex = index);
-  }
-
-  /// ✅ Hàm tạo icon thông báo có badge — có thể tái sử dụng
-  Widget buildNotificationIcon(BuildContext context, String? ptDocId) {
-    if (ptDocId == null) {
-      return IconButton(
-        onPressed: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Chưa xác định được thông tin PT")),
-          );
-        },
-        icon: const Icon(Icons.notifications_none, color: Colors.black),
-      );
-    }
+  Widget buildNotificationBottomIcon() {
+    if (ptDocId == null) return const Icon(Icons.notifications_none);
 
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
@@ -83,26 +54,16 @@ class _PTHomePageState extends State<PTHomePage> {
           .where('isRead', isEqualTo: false)
           .snapshots(),
       builder: (context, snapshot) {
-        final unreadCount = snapshot.data?.docs.length ?? 0;
+        final unread = snapshot.data?.docs.length ?? 0;
 
         return Stack(
-          alignment: Alignment.center,
+          clipBehavior: Clip.none,
           children: [
-            IconButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => PTNotificationPage(ptId: ptDocId),
-                  ),
-                );
-              },
-              icon: const Icon(Icons.notifications_none, color: Colors.black),
-            ),
-            if (unreadCount > 0)
+            const Icon(Icons.notifications_none),
+            if (unread > 0)
               Positioned(
-                right: 10,
-                top: 12,
+                top: -4,
+                right: -10,
                 child: Container(
                   padding: const EdgeInsets.all(4),
                   decoration: const BoxDecoration(
@@ -110,10 +71,10 @@ class _PTHomePageState extends State<PTHomePage> {
                     shape: BoxShape.circle,
                   ),
                   child: Text(
-                    '$unreadCount',
+                    "$unread",
                     style: const TextStyle(
-                      color: Colors.white,
                       fontSize: 10,
+                      color: Colors.white,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -125,67 +86,88 @@ class _PTHomePageState extends State<PTHomePage> {
     );
   }
 
+  void _onTap(int index) async {
+    if (index == 3) {
+      showLogoutConfirmDialog(context);
+      return;
+    }
+
+    if (index == 1) {
+      await Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const ProfilePage()),
+      );
+      _fetchUserInfo();
+      return;
+    }
+
+    if (index == 2) {
+      if (ptDocId != null) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => PTNotificationPage(ptId: ptDocId)),
+        );
+      }
+      return;
+    }
+
+    setState(() => _selectedIndex = index);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
         backgroundColor: Colors.white,
-        elevation: 3,
-        title: const Text(
-          "Trang chủ Huấn luyện viên",
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+        elevation: 0,
+        centerTitle: true,
+        title: Text(
+          "Xin chào, $ptName 👋",
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.black,
+            fontSize: 20,
+          ),
         ),
-        actions: [
-          buildNotificationIcon(context, ptDocId), // 🔔 Gọi hàm đã tách riêng
-          GestureDetector(
-            onTap: () async {
-              await Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const ProfilePage()),
-              );
-              _fetchUserInfo();
-            },
-            child: Padding(
-              padding: const EdgeInsets.only(right: 14.0),
-              child: Hero(
-                tag: 'user-avatar',
-                child: CircleAvatar(
-                  radius: 22,
-                  backgroundColor: Colors.grey[300],
-                  backgroundImage: (imageUrl != null && imageUrl!.isNotEmpty)
-                      ? NetworkImage(imageUrl!)
-                      : const AssetImage('assets/images/avatar_placeholder.png')
-                            as ImageProvider,
-                ),
-              ),
-            ),
-          ),
-        ],
       ),
-      body: _selectedIndex == 0
-          ? PTHomeTab(ptDocId: ptDocId)
-          : _selectedIndex == 1
-          ? const Center(child: Text("Lịch tập của học viên"))
-          : const Center(child: Text("Thông báo")),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        onTap: _onItemTapped,
-        selectedItemColor: AppColors.secondary,
-        unselectedItemColor: Colors.grey,
-        type: BottomNavigationBarType.fixed,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: "Trang chủ"),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.calendar_today),
-            label: "Lịch tập",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.notifications),
-            label: "Thông báo",
-          ),
-          BottomNavigationBarItem(icon: Icon(Icons.logout), label: "Đăng xuất"),
-        ],
+      body: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 250),
+        child: _selectedIndex == 0
+            ? PTHomeTab(ptDocId: ptDocId)
+            : const SizedBox(),
+      ),
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border(top: BorderSide(color: Colors.grey.shade300)),
+        ),
+        child: BottomNavigationBar(
+          currentIndex: _selectedIndex,
+          onTap: _onTap,
+          selectedItemColor: AppColors.secondary,
+          unselectedItemColor: AppColors.secondary,
+          type: BottomNavigationBarType.fixed,
+          backgroundColor: Colors.white,
+          items: [
+            const BottomNavigationBarItem(
+              icon: Icon(Icons.home_rounded),
+              label: "Trang chủ",
+            ),
+            const BottomNavigationBarItem(
+              icon: Icon(Icons.person_rounded),
+              label: "Thông tin",
+            ),
+            BottomNavigationBarItem(
+              icon: buildNotificationBottomIcon(),
+              label: "Thông báo",
+            ),
+            const BottomNavigationBarItem(
+              icon: Icon(Icons.logout_rounded),
+              label: "Đăng xuất",
+            ),
+          ],
+        ),
       ),
     );
   }
