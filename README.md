@@ -1,56 +1,86 @@
-# gym_bay_beo
+# 🏋️ Gym Bay Béo — Mobile App for Smart Gym Management
 
-Flutter App
+Ứng dụng hỗ trợ quản lý phòng gym toàn diện: từ check-in check-out bằng QR, xem lịch tập, nhắn tin với PT cho đến quản lý gói tập và khách hàng.  
+🚀 Phát triển bằng **Flutter** và **Firebase** — triển khai trên Android.
 
-Gym Bay Béo
+---
 
-Author: Ngô Ngọc Hòa (David Ngo)
+## ✨ Tagline
+📱💪 *“Tập luyện thông minh — Quản lý dễ dàng — Nâng cao trải nghiệm khách hàng tại phòng gym.”*
 
-Copyright: 2025
+---
 
-ĐỒ ÁN CHUYÊN NGÀNH
-I. Tên đề tài: Xây dựng App quản lý phòng Gym Bay Béo
-II.  Mục tiêu dự án
-Ứng dụng di động hỗ trợ quản lý và sử dụng dịch vụ phòng gym, đáp ứng cả ba vai trò: Khách hàng – Huấn luyện viên (PT) – Quản lý/Admin/Lễ tân.
-III. Công cụ và công nghệ sử dụng
- Ngôn ngữ:
-•	Flutter (Dart) 
-•	Firebase
-Công cụ hỗ trợ:
-•	VS Code
-•	Firebase Authentication
-•	Firebase Cloud Messaging 
-IV. Chức năng chính
-1. Khách hàng
-•	Đăng ký / Đăng nhập (Google/Email/Phone).
-•	Quản lý hồ sơ cá nhân (ảnh, số điện thoại, chiều cao, cân nặng, mục tiêu tập luyện).
-•	Xem lịch tập (tự động gợi ý hoặc do PT thiết kế).
-•	Nhận thông báo nhắc lịch tập.
-•	Đăng ký gói tập / thuê PT.
-•	Check-in/Check-out khi đến phòng gym.
-•	Theo dõi tiến trình luyện tập (số buổi, chỉ số cơ thể).
-2. Huấn luyện viên (PT)
-•	Quản lý danh sách học viên của mình.
-•	Tạo & cập nhật lịch tập cho từng học viên.
-•	Gửi nhắc nhở / phản hồi cho học viên.
-3. Quản lý/Admin/Lễ tân
-•	Quản lý gói tập (thêm/xóa/sửa).
-•	Quản lý nhân viên (PT, lễ tân).
-•	Quản lý khách hàng (thông tin, gói tập, thời hạn).
-•	Check-in khách hàng tại quầy.
-•	Thống kê: số hội viên, số gói tập, doanh thu (basic).
+## 👤 Thông tin dự án
+- 👨‍💻 **Sinh viên thực hiện:** Ngô Ngọc Hòa *(DavidNgo004)*
+- 🏫 Đồ án chuyên ngành — 2025
+- 🌐 Nền tảng: Android (iOS sẽ hỗ trợ trong tương lai nếu có thể)
+- 🔐 Phân quyền người dùng:
+  - **Khách hàng**
+  - **Huấn luyện viên (PT)**
+  - **Admin (Lễ tân)**
 
+---
 
+## 🚀 Tính năng chính
 
-## Getting Started
+### 🔵 Dành cho khách hàng
+- Đăng ký, đăng nhập bằng **Email / Google**
+- Check-in / Check-out bằng mã QR
+- Quản lý thông tin cá nhân
+- Xem lịch tập với PT
+- Nhắn tin realtime với PT
+- Mua và xem thời hạn gói tập
 
-This project is a starting point for a Flutter application.
+### 🟢 Dành cho PT (Huấn luyện viên)
+- Quản lý & xem thông tin học viên
+- Gửi và cập nhật lịch tập hằng ngày
+- Gửi nhắc nhở và trao đổi qua chat realtime
 
-A few resources to get you started if this is your first Flutter project:
+### 🟣 Dành cho Admin / Lễ tân
+- Quản lý khách hàng, PT, gói tập
+- Quản lý doanh thu và báo cáo thống kê
+- Duyệt và điều chỉnh đăng ký gói tập
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+---
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## 🛠️ Công nghệ sử dụng
+
+| Hạng mục | Công nghệ |
+|---------|-----------|
+| Mobile | Flutter (Dart) |
+| Firebase Services | Auth, Firestore Database, Realtime Database, Messaging, Hosting |
+| Lưu trữ hình ảnh | Cloudinary |
+| Quét QR | Flutter packages tích hợp Camera + QR Scanner |
+| Deployment | Android build |
+
+---
+
+## 🔒 Bảo mật
+- Đã cấu hình **Firebase Security Rules**
+- Tách quyền theo người dùng (khách hàng / PT / Admin)
+- Chỉ cho phép truy cập đúng dữ liệu theo vai trò
+
+---
+
+## 📂 Kiến trúc mã nguồn
+- Code tách theo **feature modules**
+- Quản lý state bằng `setState` + tách logic dịch vụ (Service Layer)
+- Tối ưu hóa Firestore query và realtime cập nhật khi cần
+
+---
+
+## 📸 Hình ảnh giao diện
+> (Sẽ được cập nhật khi hoàn tất chụp màn hình)
+
+| Màn hình | Ảnh |
+|--------|-----|
+| Đăng nhập | coming soon |
+| Trang khách hàng | coming soon |
+| Trang PT | coming soon |
+| Trang Admin | coming soon |
+
+---
+
+## 📬 Liên hệ
+📧 Email: nnhoait@gmail.com  
+🔗 GitHub: https://github.com/DavidNgo004  
