@@ -21,8 +21,8 @@ class AppColors {
   static const boxShadow = Colors.deepPurpleAccent;
   static const bgMyChat = LinearGradient(
     colors: [
-      Color(0xFF8E2DE2), // tím đậm
-      Color(0xFF4A00E0), // tím sáng hơn
+      primary, // tím đậm
+      primaryGradient, // tím sáng hơn
     ],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,

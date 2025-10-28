@@ -8,15 +8,18 @@ class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
-  /// ===== ĐĂNG XUẤT =====
   static Future<void> logout(BuildContext context) async {
     try {
+      // Đăng xuất Firebase và Google
       await FirebaseAuth.instance.signOut();
       await GoogleSignIn().signOut();
 
-      // Kiểm tra widget còn mounted trước khi điều hướng
+      // Xóa toàn bộ token đăng nhập cũ
+      await Future.delayed(const Duration(milliseconds: 200));
+
       if (!context.mounted) return;
 
+      // Quay về trang Home (đăng nhập)
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (_) => const LoginPage()),

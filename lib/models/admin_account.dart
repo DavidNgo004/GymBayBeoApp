@@ -3,29 +3,29 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 Future<void> createDefaultAdmin() async {
   try {
-    // Kiểm tra nếu tài khoản admin đã tồn tại
-    await FirebaseAuth.instance.signInWithEmailAndPassword(
+    // Kiểm tra nếu email admin đã tồn tại trong Firebase Auth
+    final methods = await FirebaseAuth.instance.fetchSignInMethodsForEmail(
+      'admin@gmail.com',
+    );
+
+    if (methods.isNotEmpty) {
+      print('Admin account already exists.');
+      return;
+    }
+
+    // Nếu chưa tồn tại thì tạo mới
+    final user = await FirebaseAuth.instance.createUserWithEmailAndPassword(
       email: 'admin@gmail.com',
       password: 'Admin@2011',
     );
-    print('Admin account already exists.');
-  } catch (e) {
-    try {
-      // Tạo tài khoản admin mới
-      final user = await FirebaseAuth.instance.createUserWithEmailAndPassword(
-        email: 'admin@gmail.com',
-        password: 'Admin@2011',
-      );
 
-      // Gán quyền admin trong Firestore
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.user!.uid)
-          .set({'email': user.user!.email, 'role': 'admin'});
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.user!.uid)
+        .set({'email': user.user!.email, 'role': 'admin'});
 
-      print('Admin account created.');
-    } catch (error) {
-      print('Error creating admin: $error');
-    }
+    print('Admin account created successfully.');
+  } catch (error) {
+    print('Error creating admin: $error');
   }
 }
