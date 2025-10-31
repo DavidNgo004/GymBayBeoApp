@@ -36,6 +36,9 @@ class AdminRecentMembershipsCard extends StatelessWidget {
                       Navigator.pushNamed(context, '/admin/memberships'),
                   icon: const Icon(Icons.list_alt, size: 18),
                   label: const Text('Xem tất cả'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.adminPrimary,
+                  ),
                 ),
               ],
             ),
@@ -45,7 +48,7 @@ class AdminRecentMembershipsCard extends StatelessWidget {
             StreamBuilder<QuerySnapshot>(
               stream: membershipsRef
                   .orderBy('createdAt', descending: true)
-                  .limit(5)
+                  .limit(3)
                   .snapshots(),
               builder: (context, snap) {
                 if (snap.connectionState == ConnectionState.waiting) {

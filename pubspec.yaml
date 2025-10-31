@@ -57,6 +57,7 @@ dependencies:
   webview_flutter_wkwebview: ^3.23.1
   fl_chart: ^1.1.1
   shared_preferences: ^2.5.3
+  calendar_date_picker2: ^2.0.1
 
 
 dev_dependencies:

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:gym_bay_beo/pages/admin/new_package_register/memberships_page.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_flutter_android/webview_flutter_android.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -61,6 +62,7 @@ class MyApp extends StatelessWidget {
         '/admin/customers': (context) => const AdminCustomersPage(),
         '/admin/checkin': (context) => AdminCheckinPage(),
         "/customerHome": (_) => const CustomerHomePage(),
+        '/admin/memberships': (context) => const AdminMembershipsPage(),
       },
     );
   }

@@ -19,6 +19,7 @@ class AppColors {
   static const caution = Colors.redAccent;
   static const divider = Colors.black;
   static const boxShadow = Colors.deepPurpleAccent;
+  static const adminPrimary = Colors.purple;
   static const bgMyChat = LinearGradient(
     colors: [
       primary, // tím đậm
