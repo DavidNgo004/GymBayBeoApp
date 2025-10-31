@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:gym_bay_beo/widgets/confirm_logout_dialog.dart';
+import 'package:gym_bay_beo/pages/admin/new_package_register/admin_recent_memberships_card.dart';
 
 class AdminHomePage extends StatelessWidget {
   AdminHomePage({Key? key}) : super(key: key);
@@ -10,6 +11,8 @@ class AdminHomePage extends StatelessWidget {
   // Firestore references
   CollectionReference get usersRef =>
       FirebaseFirestore.instance.collection('users');
+  CollectionReference get customersRef =>
+      FirebaseFirestore.instance.collection('customers');
   CollectionReference get packagesRef =>
       FirebaseFirestore.instance.collection('packages');
   CollectionReference get membershipsRef =>
@@ -138,9 +141,12 @@ class AdminHomePage extends StatelessWidget {
             const SizedBox(height: 18),
             _buildQuickActions(context),
             const SizedBox(height: 18),
-            _buildRecentMembershipsCard(context),
+
+            AdminRecentMembershipsCard(
+              membershipsRef: membershipsRef,
+              moneyFmt: _moneyFmt,
+            ),
             const SizedBox(height: 18),
-            _buildNotesCard(),
           ],
         ),
       ),
@@ -423,94 +429,6 @@ class AdminHomePage extends StatelessWidget {
               const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildRecentMembershipsCard(BuildContext context) {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Đăng ký mới',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-            ),
-            const SizedBox(height: 10),
-            StreamBuilder<QuerySnapshot>(
-              stream: membershipsRef
-                  .orderBy('createdAt', descending: true)
-                  .limit(6)
-                  .snapshots(),
-              builder: (context, snap) {
-                if (!snap.hasData)
-                  return const Center(child: CircularProgressIndicator());
-                final docs = snap.data!.docs;
-                if (docs.isEmpty)
-                  return const Padding(
-                    padding: EdgeInsets.all(8),
-                    child: Text('Chưa có đăng ký mới.'),
-                  );
-                return Column(
-                  children: docs.map((d) {
-                    final data = d.data() as Map<String, dynamic>;
-                    final user = data['userId'] ?? '';
-                    final pkg = data['packageName'] ?? data['packageId'] ?? '';
-                    final created = (data['createdAt'] as Timestamp?)?.toDate();
-                    final price = data['pricePaid'];
-                    return ListTile(
-                      dense: true,
-                      contentPadding: EdgeInsets.zero,
-                      leading: CircleAvatar(
-                        child: Text(
-                          (pkg.toString().isNotEmpty ? pkg.toString()[0] : '?'),
-                        ),
-                      ),
-                      title: Text(
-                        pkg.toString(),
-                        style: const TextStyle(fontWeight: FontWeight.w600),
-                      ),
-                      subtitle: Text(
-                        'User: $user • ${created != null ? DateFormat('dd/MM').format(created) : ''}',
-                      ),
-                      trailing: Text(
-                        price != null ? _moneyFmt.format(price) : '',
-                      ),
-                    );
-                  }).toList(),
-                );
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildNotesCard() {
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: const [
-            Text('Gợi ý', style: TextStyle(fontWeight: FontWeight.bold)),
-            SizedBox(height: 8),
-            Text(
-              '- Kiểm tra kỹ trước khi xóa gói tập (hệ thống sẽ từ chối nếu còn người dùng).',
-            ),
-            SizedBox(height: 6),
-            Text(
-              '- Bạn có thể xem chi tiết doanh thu trong 30 ngày ở bên trên.',
-            ),
-          ],
         ),
       ),
     );

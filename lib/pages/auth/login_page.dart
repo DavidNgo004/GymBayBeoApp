@@ -112,7 +112,7 @@ class _LoginPageState extends State<LoginPage> {
               'https://res.cloudinary.com/drzg13ngi/image/upload/v1760013365/gymbaybeo/35_kdnpv7.jpg',
           'name': googleUser.displayName ?? "Google User",
           'phone': '',
-          'gender': 'Khác',
+          'gender': 'Nam',
 
           //Thông tin phục vụ QR Check-in
           'qrCode': uid, // UID phục vụ quét QR
