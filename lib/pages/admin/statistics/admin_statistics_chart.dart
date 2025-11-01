@@ -55,7 +55,6 @@ class _AdminStatisticsChartState extends State<AdminStatisticsChart> {
     List<Map<String, dynamic>> filtered = all.where((m) {
       Timestamp createdAt = m['createdAt'];
       DateTime date = createdAt.toDate();
-      // Bao gồm cả ngày bắt đầu
       return !date.isBefore(start) && date.isBefore(end);
     }).toList();
 
@@ -75,7 +74,6 @@ class _AdminStatisticsChartState extends State<AdminStatisticsChart> {
     xLabels.clear();
 
     if (filterType == 'day') {
-      // Theo từng ca 4 tiếng
       for (int i = 0; i < 6; i++) {
         groupedRevenue[i] = 0;
         xLabels.add('Ca ${i + 1}');
@@ -87,7 +85,6 @@ class _AdminStatisticsChartState extends State<AdminStatisticsChart> {
             (groupedRevenue[shiftIndex] ?? 0) + (m['pricePaid'] ?? 0);
       }
     } else if (filterType == 'month') {
-      // Theo 4 tuần
       for (int i = 1; i <= 4; i++) {
         groupedRevenue[i] = 0;
         xLabels.add('Tuần $i');
@@ -100,12 +97,10 @@ class _AdminStatisticsChartState extends State<AdminStatisticsChart> {
             (groupedRevenue[week] ?? 0) + (m['pricePaid'] ?? 0);
       }
     } else {
-      // Theo 4 quý trong năm
       for (int q = 1; q <= 4; q++) {
         groupedRevenue[q] = 0;
         xLabels.add('Q$q');
       }
-
       for (var item in data) {
         DateTime time = (item['createdAt'] as Timestamp).toDate();
         int quarter = ((time.month - 1) ~/ 3) + 1;
@@ -134,7 +129,6 @@ class _AdminStatisticsChartState extends State<AdminStatisticsChart> {
   }
 
   Future<void> _pickDate() async {
-    // Lấy root context để hiển thị dialog không bị mờ đen
     final rootContext = Navigator.of(context).overlay!.context;
 
     if (filterType == 'day') {
@@ -158,7 +152,6 @@ class _AdminStatisticsChartState extends State<AdminStatisticsChart> {
         _fetchData();
       }
     } else {
-      // ✅ FIX chọn năm – hoạt động trên mọi context
       int selectedYear = selectedDate.year;
       int? pickedYear = await showDialog<int>(
         context: rootContext,
@@ -261,7 +254,6 @@ class _AdminStatisticsChartState extends State<AdminStatisticsChart> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Bộ lọc
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -304,7 +296,7 @@ class _AdminStatisticsChartState extends State<AdminStatisticsChart> {
             _buildBarChart(),
             const SizedBox(height: 16),
 
-            //chú thích cho trục X
+            // ✅ Chú thích trục X
             if (filterType == 'day')
               const Text(
                 'Chú thích: Ca 1 (0–4h), Ca 2 (4–8h), Ca 3 (8–12h), Ca 4 (12–16h), Ca 5 (16–20h), Ca 6 (20–24h)',
@@ -322,32 +314,112 @@ class _AdminStatisticsChartState extends State<AdminStatisticsChart> {
               ),
 
             const Divider(height: 30),
-
-            const Divider(height: 30),
             Text(
-              'Danh sách gói tập',
+              'Chi tiết doanh thu',
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 8),
+
             if (memberships.isEmpty)
               const Text('Không có dữ liệu cho thời gian này.')
             else
               Column(
                 children: memberships.map((m) {
                   final createdAt = (m['createdAt'] as Timestamp).toDate();
-                  return ListTile(
-                    leading: const Icon(
-                      Icons.fitness_center,
-                      color: Colors.deepPurple,
-                    ),
-                    title: Text(m['packageName'] ?? ''),
-                    subtitle: Text(
-                      'Ngày: ${DateFormat('dd/MM/yyyy HH:mm').format(createdAt)}',
-                    ),
-                    trailing: Text(
-                      widget.moneyFmt.format(m['pricePaid'] ?? 0),
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
+                  final userId = m['userId'] ?? '';
+
+                  return FutureBuilder<DocumentSnapshot>(
+                    future: (userId != '')
+                        ? FirebaseFirestore.instance
+                              .collection('customers')
+                              .doc(userId)
+                              .get()
+                        : Future.value(null),
+                    builder: (context, userSnap) {
+                      String name = 'Không xác định';
+                      String img = '';
+                      String email = '';
+                      if (userSnap.hasData &&
+                          userSnap.data != null &&
+                          userSnap.data!.exists) {
+                        final userData =
+                            userSnap.data!.data() as Map<String, dynamic>? ??
+                            {};
+                        name = userData['name'] ?? 'Khách hàng không rõ';
+                        email = userData['email'] ?? 'Không xác định';
+                        img = userData['imageUrl'] ?? '';
+                      }
+
+                      return Card(
+                        margin: const EdgeInsets.symmetric(
+                          vertical: 6,
+                          horizontal: 12,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        color: Colors.deepPurple.shade50.withOpacity(0.6),
+                        elevation: 3,
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              // Avatar
+                              img.isNotEmpty
+                                  ? CircleAvatar(
+                                      radius: 25,
+                                      backgroundImage: NetworkImage(img),
+                                    )
+                                  : const CircleAvatar(
+                                      radius: 25,
+                                      backgroundColor: Colors.deepPurple,
+                                      child: Icon(
+                                        Icons.person,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                              const SizedBox(width: 14),
+
+                              // Thông tin bên phải
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      m['packageName'] ?? '',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      '$name\n${DateFormat('dd/MM/yyyy HH:mm').format(createdAt)}',
+                                      style: const TextStyle(
+                                        fontSize: 13,
+                                        height: 1.3,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                              // Giá tiền
+                              Text(
+                                widget.moneyFmt.format(m['pricePaid'] ?? 0),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.deepPurple,
+                                  fontSize: 15,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
                   );
                 }).toList(),
               ),
