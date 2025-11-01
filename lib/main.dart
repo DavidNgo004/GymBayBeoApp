@@ -20,6 +20,7 @@ import 'package:gym_bay_beo/pages/admin/package-management/pakages_admin_page.da
 import 'package:gym_bay_beo/pages/admin/pt-management/pt_management_page.dart';
 import 'package:gym_bay_beo/pages/admin/customers/admin_customers_page.dart';
 import 'package:gym_bay_beo/pages/admin/check-in/admin_checkin_page.dart';
+import 'package:gym_bay_beo/pages/admin/statistics/statistics_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -63,6 +64,7 @@ class MyApp extends StatelessWidget {
         '/admin/checkin': (context) => AdminCheckinPage(),
         "/customerHome": (_) => const CustomerHomePage(),
         '/admin/memberships': (context) => const AdminMembershipsPage(),
+        '/admin/statistics': (context) => StatisticsPage(),
       },
     );
   }

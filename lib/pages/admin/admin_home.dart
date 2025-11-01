@@ -112,7 +112,10 @@ class AdminHomePage extends StatelessWidget {
               ListTile(
                 leading: const Icon(Icons.bar_chart),
                 title: const Text("Thống kê"),
-                onTap: () {},
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.pushNamed(context, '/admin/statistics');
+                },
               ),
 
               const Spacer(),
@@ -357,7 +360,7 @@ class AdminHomePage extends StatelessWidget {
     ).wrapWithColumnBelow(
       bottom: Row(
         children: [
-          // 🔥 Thêm ô quản lý PT hiện đại
+          // Thêm ô quản lý PT hiện đại
           Expanded(
             child: _actionTile(
               context,
