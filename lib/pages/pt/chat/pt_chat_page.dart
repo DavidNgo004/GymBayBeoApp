@@ -80,6 +80,7 @@ class _PTChatPageState extends State<PTChatPage> {
           'title': 'Tin nhắn mới từ PT ${ptData['name'] ?? ''}',
           'body': messageText,
           'isRead': false,
+          'isShown': false,
           'type': 'chat',
           'chatId': widget.chatId,
           'ptId': chatPtId,

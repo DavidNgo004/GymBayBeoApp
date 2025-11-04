@@ -8,6 +8,8 @@ import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_flutter_android/webview_flutter_android.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
+import 'package:gym_bay_beo/services/app_globals.dart';
+
 import 'firebase_options.dart';
 import 'models/admin_account.dart';
 import 'conf/app_theme.dart';
@@ -55,6 +57,7 @@ class MyApp extends StatelessWidget {
       title: "Gym Bay Béo",
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
+      navigatorKey: navigatorKey,
       home: const AuthGate(), // kiểm tra đăng nhập
       routes: {
         '/admin': (c) => AdminHomePage(),

@@ -1,11 +1,14 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:gym_bay_beo/pages/pt/profile/profile_page.dart';
 import 'package:gym_bay_beo/widgets/confirm_logout_dialog.dart';
 import 'package:gym_bay_beo/conf/app_colors.dart';
 import 'students/pt_home_tab.dart';
 import 'notification/pt_notification_page.dart';
+import 'package:gym_bay_beo/widgets/app_notification.dart';
 
 class PTHomePage extends StatefulWidget {
   const PTHomePage({Key? key}) : super(key: key);
@@ -21,10 +24,20 @@ class _PTHomePageState extends State<PTHomePage> {
   String ptName = "";
   String? ptDocId;
 
+  final _audioPlayer = AudioPlayer(); // tạo player toàn cục
+
   @override
   void initState() {
     super.initState();
-    _fetchUserInfo();
+    _initData();
+  }
+
+  Future<void> _initData() async {
+    await _fetchUserInfo();
+
+    if (ptDocId != null) {
+      _listenToUnshownNotifications();
+    }
   }
 
   Future<void> _fetchUserInfo() async {
@@ -42,6 +55,39 @@ class _PTHomePageState extends State<PTHomePage> {
         ptName = data['name'] ?? "";
       });
     }
+  }
+
+  void _listenToUnshownNotifications() {
+    FirebaseFirestore.instance
+        .collection('pt_notifications')
+        .where('ptId', isEqualTo: ptDocId)
+        .where('isShown', isEqualTo: false)
+        .where('isRead', isEqualTo: false)
+        .snapshots()
+        .listen((snapshot) async {
+          for (var docChange in snapshot.docChanges) {
+            if (docChange.type == DocumentChangeType.added) {
+              final data = docChange.doc.data() as Map<String, dynamic>;
+              final title = data['title'] ?? 'Thông báo mới';
+              final body = data['body'] ?? '';
+
+              // Rung nhẹ để tạo hiệu ứng phản hồi
+              HapticFeedback.mediumImpact();
+
+              // Phát âm thanh
+              try {
+                await _audioPlayer.play(AssetSource('sounds/quack.mp3'));
+              } catch (e) {
+                debugPrint("Lỗi phát âm thanh thông báo: $e");
+              }
+
+              showAppNotification(context, "$title: $body");
+
+              // Cập nhật lại isShown = true
+              docChange.doc.reference.update({'isShown': true});
+            }
+          }
+        });
   }
 
   Widget buildNotificationBottomIcon() {

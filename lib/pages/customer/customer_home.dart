@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -32,14 +33,31 @@ class _CustomerHomePageState extends State<CustomerHomePage>
   late final PageController _pageController;
   StreamSubscription? _chatNotifSub;
 
+  final _audioPlayer = AudioPlayer(); // tạo player toàn cục
+
   @override
   void initState() {
     super.initState();
     _pageController = PageController();
-    _fetchUserInfo();
-    _listenNotification();
-    _listenForNewChatNotifications(); // ✅ Thêm phần thông báo tin nhắn
+    _initData();
     _checkTodayWorkout();
+
+    // 🔄 Thêm đoạn này để tự khởi động lại listener khi người dùng quay lại app
+    WidgetsBinding.instance.addObserver(
+      LifecycleEventHandler(
+        resumeCallBack: () async {
+          _listenAllNotifications();
+        },
+      ),
+    );
+  }
+
+  Future<void> _initData() async {
+    await _fetchUserInfo();
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      _listenAllNotifications(); // ✅ Gọi khi user có thật
+    }
   }
 
   @override
@@ -75,66 +93,46 @@ class _CustomerHomePageState extends State<CustomerHomePage>
     }
   }
 
-  /// 🧠 Lắng nghe các thông báo chung (như lịch tập, tiến trình,...)
-  void _listenNotification() {
-    final userId = FirebaseAuth.instance.currentUser!.uid;
-    FirebaseFirestore.instance
-        .collection('notifications')
-        .where('userId', isEqualTo: userId)
-        .where('isShown', isEqualTo: false)
-        .orderBy('createdAt', descending: false)
-        .snapshots()
-        .listen((snapshot) async {
-          for (var docChange in snapshot.docChanges) {
-            if (docChange.type == DocumentChangeType.added) {
-              final data = docChange.doc.data();
-              if (data == null) continue;
+  /// Lắng nghe các thông báo
+  void _listenAllNotifications() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
 
-              final title = data['title'] ?? "Thông báo mới";
-              final body = data['body'] ?? "";
-
-              HapticFeedback.mediumImpact();
-              showAppNotification(context, "$title: $body");
-
-              await docChange.doc.reference.update({'isShown': true});
-            }
-          }
-        });
-  }
-
-  /// 💬 Lắng nghe realtime tin nhắn mới từ PT
-  void _listenForNewChatNotifications() {
-    final userId = FirebaseAuth.instance.currentUser!.uid;
+    // Hủy listener cũ nếu đang tồn tại
+    _chatNotifSub?.cancel();
 
     _chatNotifSub = FirebaseFirestore.instance
         .collection('notifications')
-        .where('userId', isEqualTo: userId)
-        .where('type', isEqualTo: 'chat')
+        .where('userId', isEqualTo: user.uid)
+        .where('isShown', isEqualTo: false)
         .where('isRead', isEqualTo: false)
         .orderBy('createdAt', descending: false)
         .snapshots()
         .listen((snapshot) async {
+          if (!mounted || snapshot.docChanges.isEmpty) return;
+
           for (var change in snapshot.docChanges) {
             if (change.type == DocumentChangeType.added) {
               final data = change.doc.data();
               if (data == null) continue;
 
-              final ptName = data['ptName'] ?? 'Huấn luyện viên của bạn';
-              final body = data['body'] ?? '';
-
+              final type = data['type'] ?? 'general';
+              final title = data['title'] ?? "Thông báo mới";
+              final body = data['body'] ?? "";
+              // Rung nhẹ để tạo hiệu ứng phản hồi
               HapticFeedback.mediumImpact();
-              showAppNotification(
-                context,
-                "💬 $ptName: $body",
-                color: AppColors.primary,
-              );
 
-              // Cập nhật isRead = true sau khi hiển thị (tránh lặp lại)
+              // Phát âm thanh
               try {
-                await change.doc.reference.update({'isRead': true});
+                await _audioPlayer.play(AssetSource('sounds/quack.mp3'));
               } catch (e) {
-                debugPrint('Lỗi khi cập nhật isRead: $e');
+                debugPrint("Lỗi phát âm thanh thông báo: $e");
               }
+
+              showAppNotification(context, "$title: $body");
+
+              // Cập nhật lại isShown = true
+              change.doc.reference.update({'isShown': true});
             }
           }
         });
@@ -449,5 +447,18 @@ class _CustomerHomePageState extends State<CustomerHomePage>
         ),
       ),
     );
+  }
+}
+
+class LifecycleEventHandler extends WidgetsBindingObserver {
+  final Future<void> Function()? resumeCallBack;
+
+  LifecycleEventHandler({this.resumeCallBack});
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      resumeCallBack?.call();
+    }
   }
 }

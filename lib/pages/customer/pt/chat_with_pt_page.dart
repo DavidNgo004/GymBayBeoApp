@@ -83,12 +83,17 @@ class _ChatWithPTPageState extends State<ChatWithPTPage> {
       'updatedAt': FieldValue.serverTimestamp(),
     });
 
+    final userName = userData != null
+        ? (userData!['name'] ?? 'Khách hàng')
+        : 'Khách hàng';
+
     // tạo thông báo cho PT
     await _firestore.collection('pt_notifications').add({
       'ptId': widget.ptId,
-      'title': 'Tin nhắn mới từ khách hàng',
+      'title': '💬 $userName',
       'body': text,
       'isRead': false,
+      'isShown': false,
       'createdAt': FieldValue.serverTimestamp(),
       'chatId': chatId,
       'userId': currentUid,

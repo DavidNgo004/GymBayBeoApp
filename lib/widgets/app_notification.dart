@@ -1,17 +1,28 @@
-import 'package:flutter/material.dart';
 import 'dart:async';
+import 'package:flutter/material.dart';
+import 'package:gym_bay_beo/services/app_globals.dart';
 
-/// Hiển thị thông báo kiểu toast trong app
-/// title: tiêu đề hoặc nội dung
-/// duration: thời gian hiển thị (mặc định 3s)
-/// color: màu background (mặc định xanh dương)
+/// Hiển thị thông báo kiểu toast (popup nhỏ) trong app.
+/// - Nếu context hiện tại không có Overlay, sẽ fallback sang navigatorKey.
 void showAppNotification(
-  BuildContext context,
+  BuildContext? context,
   String title, {
   Duration duration = const Duration(seconds: 3),
   Color color = Colors.blueAccent,
 }) {
-  final overlay = Overlay.of(context);
+  // Ưu tiên overlay hiện tại, fallback nếu null
+  BuildContext? safeContext;
+  try {
+    final overlay = Overlay.of(context!);
+    if (overlay != null && context.mounted) {
+      safeContext = context;
+    }
+  } catch (_) {}
+
+  safeContext ??= navigatorKey.currentContext; // fallback
+  if (safeContext == null) return;
+
+  final overlay = Overlay.of(safeContext);
   if (overlay == null) return;
 
   final overlayEntry = OverlayEntry(
@@ -20,9 +31,8 @@ void showAppNotification(
 
   overlay.insert(overlayEntry);
 
-  // Tự ẩn sau duration
   Timer(duration, () {
-    overlayEntry.remove();
+    if (overlayEntry.mounted) overlayEntry.remove();
   });
 }
 
@@ -55,7 +65,7 @@ class _NotificationWidgetState extends State<_NotificationWidget>
 
     _controller.forward();
 
-    // Tự ẩn sau 3s
+    // Tự ẩn mượt sau 3s
     Future.delayed(const Duration(seconds: 3), () {
       if (mounted) _controller.reverse();
     });
