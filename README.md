@@ -30,6 +30,7 @@
 - Xem lịch tập với PT
 - Nhắn tin realtime với PT
 - Mua và xem thời hạn gói tập
+- Chatbot tư vấn dinh dưỡng và buổi tập
 
 ### 🟢 Dành cho PT (Huấn luyện viên)
 - Quản lý & xem thông tin học viên
