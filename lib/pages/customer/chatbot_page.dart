@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:chat_bubbles/chat_bubbles.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:gym_bay_beo/conf/app_colors.dart';
@@ -87,9 +88,15 @@ Câu hỏi: $text
               final confirm = await showDialog<bool>(
                 context: context,
                 builder: (ctx) => AlertDialog(
-                  title: const Text('Xóa toàn bộ lịch sử chat?'),
+                  title: const Text(
+                    'Xóa toàn bộ lịch sử chat?',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.caution,
+                    ),
+                  ),
                   content: const Text(
-                    'Hành động này sẽ xóa vĩnh viễn tất cả tin nhắn.',
+                    'Hành động này sẽ xóa vĩnh viễn tất cả lịch sử chat.',
                   ),
                   actions: [
                     TextButton(
@@ -99,6 +106,10 @@ Câu hỏi: $text
                     ElevatedButton(
                       onPressed: () => Navigator.pop(ctx, true),
                       child: const Text('Xóa'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.caution,
+                        foregroundColor: Colors.white,
+                      ),
                     ),
                   ],
                 ),
@@ -159,12 +170,44 @@ Câu hỏi: $text
                             tail: true,
                             textStyle: const TextStyle(fontSize: 16),
                           ),
-                          BubbleNormal(
-                            text: msg['botResponse'],
-                            isSender: false,
-                            color: Colors.grey.shade200,
-                            tail: true,
-                            textStyle: const TextStyle(fontSize: 16),
+                          // Bot response bubble rendered with Markdown inside a decorated Container
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: Container(
+                              margin: const EdgeInsets.symmetric(vertical: 6),
+                              padding: const EdgeInsets.all(12),
+                              constraints: BoxConstraints(
+                                maxWidth:
+                                    MediaQuery.of(context).size.width * 0.8,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade200,
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: MarkdownBody(
+                                data: msg['botResponse'] ?? '',
+                                selectable: true, // cho phép copy text
+                                styleSheet: MarkdownStyleSheet(
+                                  p: const TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.black87,
+                                  ),
+                                  strong: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  em: const TextStyle(
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                                  code: TextStyle(
+                                    backgroundColor: Colors.grey.shade300,
+                                    fontFamily: 'monospace',
+                                  ),
+                                  blockquote: const TextStyle(
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                              ),
+                            ),
                           ),
                         ],
                       ),
