@@ -61,6 +61,8 @@ dependencies:
   calendar_date_picker2: ^2.0.1
   month_picker_dialog: ^6.6.0
   audioplayers: ^6.5.1
+  flutter_dotenv: ^5.1.0
+  chat_bubbles: ^1.7.0
 
 
 dev_dependencies:
@@ -89,6 +91,7 @@ flutter:
   assets:
     - assets/images/
     - assets/sounds/
+    - .env
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

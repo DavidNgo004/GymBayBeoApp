@@ -16,6 +16,8 @@ import 'package:gym_bay_beo/pages/customer/pt/pt_list_page.dart';
 import 'package:gym_bay_beo/pages/customer/notification/notification_page.dart';
 import 'package:gym_bay_beo/services/notification_service.dart';
 
+import 'package:gym_bay_beo/pages/customer/chatbot_page.dart';
+
 class CustomerHomePage extends StatefulWidget {
   const CustomerHomePage({super.key});
 
@@ -32,8 +34,7 @@ class _CustomerHomePageState extends State<CustomerHomePage>
   String? ptId;
   late final PageController _pageController;
   StreamSubscription? _chatNotifSub;
-
-  final _audioPlayer = AudioPlayer(); // tạo player toàn cục
+  final _audioPlayer = AudioPlayer();
 
   @override
   void initState() {
@@ -42,7 +43,6 @@ class _CustomerHomePageState extends State<CustomerHomePage>
     _initData();
     _checkTodayWorkout();
 
-    // 🔄 Thêm đoạn này để tự khởi động lại listener khi người dùng quay lại app
     WidgetsBinding.instance.addObserver(
       LifecycleEventHandler(
         resumeCallBack: () async {
@@ -56,7 +56,7 @@ class _CustomerHomePageState extends State<CustomerHomePage>
     await _fetchUserInfo();
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
-      _listenAllNotifications(); // ✅ Gọi khi user có thật
+      _listenAllNotifications();
     }
   }
 
@@ -93,12 +93,10 @@ class _CustomerHomePageState extends State<CustomerHomePage>
     }
   }
 
-  /// Lắng nghe các thông báo
   void _listenAllNotifications() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
 
-    // Hủy listener cũ nếu đang tồn tại
     _chatNotifSub?.cancel();
 
     _chatNotifSub = FirebaseFirestore.instance
@@ -116,13 +114,11 @@ class _CustomerHomePageState extends State<CustomerHomePage>
               final data = change.doc.data();
               if (data == null) continue;
 
-              final type = data['type'] ?? 'general';
               final title = data['title'] ?? "Thông báo mới";
               final body = data['body'] ?? "";
-              // Rung nhẹ để tạo hiệu ứng phản hồi
+
               HapticFeedback.mediumImpact();
 
-              // Phát âm thanh
               try {
                 await _audioPlayer.play(AssetSource('sounds/quack.mp3'));
               } catch (e) {
@@ -130,15 +126,12 @@ class _CustomerHomePageState extends State<CustomerHomePage>
               }
 
               showAppNotification(context, "$title: $body");
-
-              // Cập nhật lại isShown = true
               change.doc.reference.update({'isShown': true});
             }
           }
         });
   }
 
-  // --- Danh sách các trang ---
   List<Widget> get _pages => [
     _buildHomeContent(context),
     const WorkoutSchedulePage(),
@@ -146,7 +139,6 @@ class _CustomerHomePageState extends State<CustomerHomePage>
     const ProgressPage(),
   ];
 
-  // --- Bottom Navigation Bar ---
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -164,7 +156,6 @@ class _CustomerHomePageState extends State<CustomerHomePage>
           ),
         ),
         actions: [
-          // 🔔 Icon thông báo
           StreamBuilder(
             stream: FirebaseFirestore.instance
                 .collection('notifications')
@@ -217,14 +208,12 @@ class _CustomerHomePageState extends State<CustomerHomePage>
               );
             },
           ),
-
-          // Avatar người dùng
           GestureDetector(
             onTap: () async {
               await Navigator.of(
                 context,
               ).push(_createRoute(const ProfilePage()));
-              _fetchUserInfo(); // reload khi quay về
+              _fetchUserInfo();
             },
             child: Padding(
               padding: const EdgeInsets.only(right: 14.0),
@@ -243,6 +232,25 @@ class _CustomerHomePageState extends State<CustomerHomePage>
           ),
         ],
       ),
+
+      //floating chatbot button
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: AppColors.primary,
+        elevation: 6,
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const ChatBotPage()),
+          );
+        },
+        child: const Icon(
+          Icons.smart_toy_rounded,
+          color: Colors.white,
+          size: 28,
+        ),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+
       body: PageView(
         controller: _pageController,
         physics: const NeverScrollableScrollPhysics(),
@@ -253,7 +261,6 @@ class _CustomerHomePageState extends State<CustomerHomePage>
         currentIndex: _selectedIndex,
         onTap: (index) async {
           if (index == 4) {
-            // Đăng xuất
             await showLogoutConfirmDialog(context);
           } else {
             _navigateTo(index);

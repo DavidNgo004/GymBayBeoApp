@@ -7,6 +7,7 @@ import 'package:gym_bay_beo/pages/admin/new_package_register/memberships_page.da
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_flutter_android/webview_flutter_android.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'package:gym_bay_beo/services/app_globals.dart';
 
@@ -26,6 +27,7 @@ import 'package:gym_bay_beo/pages/admin/statistics/statistics_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env");
   await initializeDateFormatting('vi_VN', null); // format ngày theo Việt Nam
 
   try {

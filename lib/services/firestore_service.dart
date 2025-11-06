@@ -207,4 +207,84 @@ class FirestoreService {
               snap.docs.map((d) => UserMembership.fromFirestore(d)).toList(),
         );
   }
+
+  // -------------------------
+  // --- CHAT HISTORY ------
+  // -------------------------
+  //
+  // Lưu và đọc lịch sử chat giữa user và bot (dùng cho chatbot Gym Bay Béo)
+
+  /// Lưu 1 message (user hỏi + bot trả lời)
+  Future<void> saveChatMessage({
+    required String userId,
+    required String userMessage,
+    required String botResponse,
+    String? sessionId, // optional: để gom 1 phiên chat
+  }) async {
+    try {
+      await _db.collection('chatbot_history').add({
+        'userId': userId,
+        'sessionId': sessionId ?? '',
+        'userMessage': userMessage,
+        'botResponse': botResponse,
+        'timestamp': FieldValue.serverTimestamp(),
+        'createdAt': DateTime.now().toIso8601String(),
+      });
+    } catch (e) {
+      print('saveChatMessage error: $e');
+      rethrow;
+    }
+  }
+
+  /// Stream lịch sử chat của 1 user (mới nhất cuối)
+  Stream<List<Map<String, dynamic>>> userChatHistoryStream(String userId) {
+    return _db
+        .collection('chatbot_history')
+        .where('userId', isEqualTo: userId)
+        .orderBy('timestamp', descending: true)
+        .snapshots()
+        .map((snap) {
+          return snap.docs.map((d) {
+            final data = d.data();
+            return {
+              'id': d.id,
+              'userMessage': data['userMessage'] ?? '',
+              'botResponse': data['botResponse'] ?? '',
+              'timestamp': data['timestamp'] is Timestamp
+                  ? (data['timestamp'] as Timestamp).toDate()
+                  : (data['createdAt'] != null
+                        ? DateTime.tryParse(data['createdAt'])
+                        : null),
+            };
+          }).toList();
+        });
+  }
+
+  /// Stream toàn bộ chat (Admin) — có thể paginate/batch nếu data quá lớn
+  Stream<List<Map<String, dynamic>>> allChatHistoryStream() {
+    return _db
+        .collection('chatbot_history')
+        .orderBy('timestamp', descending: false)
+        .snapshots()
+        .map(
+          (snap) => snap.docs.map((d) {
+            final data = d.data();
+            return {
+              'id': d.id,
+              'userId': data['userId'] ?? '',
+              'sessionId': data['sessionId'] ?? '',
+              'userMessage': data['userMessage'] ?? '',
+              'botResponse': data['botResponse'] ?? '',
+              'timestamp': data['timestamp'] is Timestamp
+                  ? (data['timestamp'] as Timestamp).toDate()
+                  : null,
+            };
+          }).toList(),
+        );
+  }
+
+  /// Xóa 1 chat entry (admin)
+  Future<void> deleteChatEntry(String id) async {
+    await _db.collection('chatbot_history').doc(id).delete();
+  }
 }
