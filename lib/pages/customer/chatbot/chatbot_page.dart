@@ -3,8 +3,8 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:chat_bubbles/chat_bubbles.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:gym_bay_beo/conf/app_colors.dart';
-import '../../services/gemini_service.dart';
-import '../../services/firestore_service.dart';
+import '../../../services/gemini_service.dart';
+import '../../../services/firestore_service.dart';
 
 class ChatBotPage extends StatefulWidget {
   const ChatBotPage({super.key});
@@ -37,13 +37,17 @@ class _ChatBotPageState extends State<ChatBotPage> {
     final prompt =
         """
 Bạn là chatbot Gym Bay Béo 💪.
-Hãy trả lời bằng tiếng Việt thân thiện, vui vẻ, có emoji.
+Hãy trả lời bằng tiếng Việt thân thiện, vui vẻ, có emoji nếu cần thiết.
+Trả lời ngôn ngữ dễ hiểu và đi đúng vào trọng tâm câu trả lời không dài dòng.
 Nếu được hỏi:
 - Giờ mở cửa: 6h sáng - 22h30 tối hàng ngày.
 - Dịch vụ: gym, yoga, PT cá nhân, dinh dưỡng.
 - PT: tư vấn PT, giảm cân, tăng cơ, lịch tập.
-- Dinh dưỡng: hướng dẫn ăn uống phù hợp với mục tiêu tập.
+- Dinh dưỡng: hướng dẫn ăn uống phù hợp với mục tiêu tập, tạo thực đơn cá nhân.
+- Địa chỉ: 428/10A Chiến Lược, Bình Trị Đông A, Bình Tân, TP. HCM.
 - Tạm biệt: Gym Bay Béo cảm ơn bạn,hẹn gặp lại và chào tạm biệt bạn.
+- Chủ phòng tập: Ngô Ngọc Hòa, SĐT: 089646865.
+Fanpage: https://www.facebook.com/hoa.ngo.402850
 Câu hỏi: $text
 """;
 
@@ -74,7 +78,7 @@ Câu hỏi: $text
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          '🤖 Chatbot Gym Bay Béo',
+          'Chatbot Gym Bay Béo',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
@@ -166,9 +170,12 @@ Câu hỏi: $text
                           BubbleNormal(
                             text: msg['userMessage'],
                             isSender: true,
-                            color: Colors.deepPurple.shade100,
+                            color: AppColors.primary,
                             tail: true,
-                            textStyle: const TextStyle(fontSize: 16),
+                            textStyle: const TextStyle(
+                              fontSize: 16,
+                              color: AppColors.textPrimary,
+                            ),
                           ),
                           // Bot response bubble rendered with Markdown inside a decorated Container
                           Align(

@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:gym_bay_beo/conf/app_colors.dart';
-import 'package:gym_bay_beo/services/notification_service.dart'; // ✅ thêm dòng này
+import 'package:gym_bay_beo/services/notification_service.dart';
 
 class WorkoutSchedulePage extends StatefulWidget {
   const WorkoutSchedulePage({super.key});
@@ -24,7 +24,7 @@ class _WorkoutSchedulePageState extends State<WorkoutSchedulePage> {
     _checkTodayWorkout(); // kiểm tra khi vào màn hình
   }
 
-  // ✅ Cập nhật: Thay vì hiện AlertDialog, giờ sẽ lưu thông báo vào Firestore
+  // lưu thông báo vào Firestore
   Future<void> _checkTodayWorkout() async {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
@@ -398,6 +398,22 @@ class _WorkoutSchedulePageState extends State<WorkoutSchedulePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
+      appBar: AppBar(
+        title: const Text(
+          'Lịch tập luyện',
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+        ),
+        centerTitle: true,
+        foregroundColor: AppColors.textPrimary,
+        backgroundColor: AppColors.primary,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add_box_rounded),
+            onPressed: () => _addOrEditWorkoutDialog(),
+            tooltip: 'Thêm lịch tập',
+          ),
+        ],
+      ),
       body: Column(
         children: [
           // Ảnh tiêu đề
@@ -432,20 +448,6 @@ class _WorkoutSchedulePageState extends State<WorkoutSchedulePage> {
                 color: Colors.grey.shade300,
                 alignment: Alignment.center,
                 child: const Icon(Icons.image_not_supported, size: 50),
-              ),
-            ),
-          ),
-
-          Padding(
-            padding: const EdgeInsets.only(top: 10, bottom: 10),
-            child: Center(
-              child: Text(
-                "Lịch tập của bạn",
-                style: TextStyle(
-                  color: AppColors.primary,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
               ),
             ),
           ),
@@ -553,7 +555,7 @@ class _WorkoutSchedulePageState extends State<WorkoutSchedulePage> {
 
                               // Hành động (chỉnh sửa / xóa)
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
+                                mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   if (isOwnSchedule) ...[
                                     IconButton(
@@ -673,13 +675,6 @@ class _WorkoutSchedulePageState extends State<WorkoutSchedulePage> {
             ),
           ),
         ],
-      ),
-
-      //Nút thêm cố định bên góc phải dưới
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: AppColors.primary.withOpacity(0.1),
-        onPressed: () => _addOrEditWorkoutDialog(),
-        child: const Icon(Icons.add, color: Colors.white),
       ),
     );
   }

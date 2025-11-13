@@ -64,6 +64,7 @@ dependencies:
   flutter_dotenv: ^5.1.0
   chat_bubbles: ^1.7.0
   flutter_markdown: ^0.6.22
+  flutter_svg: ^2.0.7
 
 
 dev_dependencies:
@@ -92,6 +93,7 @@ flutter:
   assets:
     - assets/images/
     - assets/sounds/
+    - assets/icons/
     - .env
 
   # An image asset can refer to one or more resolution-specific "variants", see

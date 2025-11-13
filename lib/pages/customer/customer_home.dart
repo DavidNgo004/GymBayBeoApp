@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:gym_bay_beo/conf/app_colors.dart';
@@ -16,7 +17,7 @@ import 'package:gym_bay_beo/pages/customer/pt/pt_list_page.dart';
 import 'package:gym_bay_beo/pages/customer/notification/notification_page.dart';
 import 'package:gym_bay_beo/services/notification_service.dart';
 
-import 'package:gym_bay_beo/pages/customer/chatbot_page.dart';
+import 'package:gym_bay_beo/pages/customer/chatbot/chatbot_page.dart';
 
 class CustomerHomePage extends StatefulWidget {
   const CustomerHomePage({super.key});
@@ -235,7 +236,7 @@ class _CustomerHomePageState extends State<CustomerHomePage>
 
       //floating chatbot button
       floatingActionButton: FloatingActionButton(
-        backgroundColor: AppColors.primary,
+        backgroundColor: AppColors.primary.withOpacity(0.4),
         elevation: 6,
         onPressed: () {
           Navigator.push(
@@ -243,10 +244,11 @@ class _CustomerHomePageState extends State<CustomerHomePage>
             MaterialPageRoute(builder: (_) => const ChatBotPage()),
           );
         },
-        child: const Icon(
-          Icons.smart_toy_rounded,
-          color: Colors.white,
-          size: 28,
+        child: SvgPicture.asset(
+          'assets/icons/chatbot.svg',
+          width: 40,
+          height: 40,
+          color: Colors.white, // nếu icon hỗ trợ fill
         ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
