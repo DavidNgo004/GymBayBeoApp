@@ -26,9 +26,9 @@ Future<void> generateFakeWeightData() async {
 
   // Tạo dữ liệu ngẫu nhiên cho 12 tháng trong năm 2025
   double startWeight = 68;
-  for (int month = 1; month <= 12; month++) {
-    // Giảm ngẫu nhiên 0–1.5kg mỗi tháng
-    startWeight -= random.nextDouble() * 1.5;
+  for (int month = 1; month <= 10; month++) {
+    // Tăng ngẫu nhiên 0–1.5kg mỗi tháng
+    startWeight += random.nextDouble() * 0.8;
 
     final fakeDate = DateTime(2025, month, 15, 10, 0);
     await colRef.add({
@@ -37,5 +37,5 @@ Future<void> generateFakeWeightData() async {
     });
   }
 
-  print('✅ Đã tạo dữ liệu cân nặng giả cho 12 tháng trong năm 2025!');
+  print('Đã tạo dữ liệu cân nặng giả cho 12 tháng trong năm 2025!');
 }

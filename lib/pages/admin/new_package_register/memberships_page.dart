@@ -43,19 +43,23 @@ class _AdminMembershipsPageState extends State<AdminMembershipsPage> {
       dialogBackgroundColor: AppColors.background,
     );
 
-    if (values != null && values.length == 2) {
-      setState(() {
-        startDate = DateTime(values[0]!.year, values[0]!.month, values[0]!.day);
-        endDate = DateTime(
-          values[1]!.year,
-          values[1]!.month,
-          values[1]!.day,
-          23,
-          59,
-          59,
-        );
-      });
-    }
+    if (values == null || values.isEmpty) return; // Không chọn gì
+
+    final first = values[0];
+    final second = values.length > 1 ? values[1] : null;
+
+    if (first == null) return;
+
+    setState(() {
+      // Nếu chỉ chọn 1 ngày → lọc trong ngày đó
+      startDate = DateTime(first.year, first.month, first.day);
+
+      if (second == null) {
+        endDate = DateTime(first.year, first.month, first.day, 23, 59, 59);
+      } else {
+        endDate = DateTime(second.year, second.month, second.day, 23, 59, 59);
+      }
+    });
   }
 
   //Tìm khách hàng theo tên hoặc email
@@ -93,7 +97,7 @@ class _AdminMembershipsPageState extends State<AdminMembershipsPage> {
     });
   }
 
-  // 🧮 Lọc danh sách gói tập
+  // Lọc danh sách gói tập
   Stream<QuerySnapshot> _getFilteredMemberships() {
     Query query = membershipsRef;
 
@@ -203,7 +207,7 @@ class _AdminMembershipsPageState extends State<AdminMembershipsPage> {
                   Navigator.pushNamed(context, '/admin/packages');
                 },
               ),
-              // 🔥 Thêm menu quản lý PT
+              // Thêm menu quản lý PT
               ListTile(
                 leading: const Icon(Icons.sports_gymnastics),
                 title: const Text("Quản lý PT"),

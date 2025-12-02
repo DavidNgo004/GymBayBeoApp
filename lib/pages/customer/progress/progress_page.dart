@@ -43,7 +43,7 @@ class _ProgressPageState extends State<ProgressPage>
     final user = FirebaseAuth.instance.currentUser;
     uid = user?.uid;
     if (uid != null) _subscribeUser();
-    // generateFakeWeightData(); dùng để test diagram weight
+    // generateFakeWeightData(); // dùng để test diagram weight
   }
 
   void _subscribeUser() {
@@ -798,49 +798,6 @@ class _ProgressPageState extends State<ProgressPage>
                 },
               ),
 
-              const SizedBox(height: 14),
-
-              // Detail filter (applies to the detailed small chart below)
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  const Text('Bộ lọc chi tiết:'),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: [
-                          ChoiceChip(
-                            label: const Text('7 ngày'),
-                            selected: _detailFilter == WeightRangeFilter.last7,
-                            onSelected: (v) => setState(
-                              () => _detailFilter = WeightRangeFilter.last7,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          ChoiceChip(
-                            label: const Text('30 ngày'),
-                            selected: _detailFilter == WeightRangeFilter.last30,
-                            onSelected: (v) => setState(
-                              () => _detailFilter = WeightRangeFilter.last30,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          ChoiceChip(
-                            label: const Text('Toàn bộ'),
-                            selected: _detailFilter == WeightRangeFilter.all,
-                            onSelected: (v) => setState(
-                              () => _detailFilter = WeightRangeFilter.all,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-
               const SizedBox(height: 12),
 
               // Detailed line chart according to detail filter
@@ -897,80 +854,7 @@ class _ProgressPageState extends State<ProgressPage>
                   final minY = points.map((e) => e.y).reduce(min) - 2.0;
                   final maxY = points.map((e) => e.y).reduce(max) + 2.0;
 
-                  return SizedBox(
-                    height: 180,
-                    child: Card(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(12.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Cân nặng (chi tiết)',
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                            const SizedBox(height: 8),
-                            Expanded(
-                              child: LineChart(
-                                LineChartData(
-                                  minX: 0,
-                                  maxX: points.last.x,
-                                  minY: (minY.isFinite ? minY : 0.0),
-                                  maxY: (maxY.isFinite
-                                      ? maxY
-                                      : (points.first.y + 5)),
-                                  gridData: FlGridData(show: true),
-                                  titlesData: FlTitlesData(
-                                    leftTitles: AxisTitles(
-                                      sideTitles: SideTitles(showTitles: false),
-                                    ),
-                                    bottomTitles: AxisTitles(
-                                      sideTitles: SideTitles(
-                                        showTitles: true,
-                                        reservedSize: 28,
-                                        getTitlesWidget: (value, meta) {
-                                          final idx = value.toInt();
-                                          if (idx >= 0 && idx < labels.length)
-                                            return Text(
-                                              labels[idx],
-                                              style: const TextStyle(
-                                                fontSize: 10,
-                                              ),
-                                            );
-                                          return const Text('');
-                                        },
-                                      ),
-                                    ),
-                                  ),
-                                  lineBarsData: [
-                                    LineChartBarData(
-                                      spots: points,
-                                      isCurved: true,
-                                      color: AppColors.primary,
-                                      barWidth: 3,
-                                      dotData: FlDotData(show: true),
-                                      belowBarData: BarAreaData(
-                                        show: true,
-                                        gradient: LinearGradient(
-                                          colors: [
-                                            AppColors.primary.withOpacity(0.12),
-                                            AppColors.primary.withOpacity(0.02),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  );
+                  return SizedBox(height: 0);
                 },
               ),
 

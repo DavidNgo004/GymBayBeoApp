@@ -575,6 +575,7 @@ class _PTManagementPageState extends State<PTManagementPage> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showAddPTDialog,
         backgroundColor: Colors.deepPurple,
+        foregroundColor: AppColors.textPrimary,
         icon: const Icon(Icons.add),
         label: const Text("Thêm PT"),
       ),

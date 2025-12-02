@@ -151,43 +151,6 @@ class _AdminStatisticsChartState extends State<AdminStatisticsChart> {
         setState(() => selectedDate = picked);
         _fetchData();
       }
-    } else {
-      int selectedYear = selectedDate.year;
-      int? pickedYear = await showDialog<int>(
-        context: rootContext,
-        barrierDismissible: false,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: const Text("Chọn năm"),
-            content: SizedBox(
-              height: 250,
-              child: YearPicker(
-                firstDate: DateTime(2020),
-                lastDate: DateTime(2100),
-                selectedDate: DateTime(selectedYear),
-                onChanged: (DateTime dateTime) {
-                  selectedYear = dateTime.year;
-                },
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text("Hủy"),
-              ),
-              ElevatedButton(
-                onPressed: () => Navigator.pop(context, selectedYear),
-                child: const Text("OK"),
-              ),
-            ],
-          );
-        },
-      );
-
-      if (pickedYear != null) {
-        setState(() => selectedDate = DateTime(pickedYear, 1, 1));
-        _fetchData();
-      }
     }
   }
 
@@ -262,7 +225,6 @@ class _AdminStatisticsChartState extends State<AdminStatisticsChart> {
                   items: const [
                     DropdownMenuItem(value: 'day', child: Text('Theo ngày')),
                     DropdownMenuItem(value: 'month', child: Text('Theo tháng')),
-                    DropdownMenuItem(value: 'year', child: Text('Theo năm')),
                   ],
                   onChanged: (value) {
                     setState(() {
