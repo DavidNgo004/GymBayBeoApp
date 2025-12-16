@@ -6,8 +6,11 @@ import 'admin_statistics_chart.dart';
 import 'package:gym_bay_beo/widgets/confirm_logout_dialog.dart';
 
 class StatisticsPage extends StatelessWidget {
-  final CollectionReference membershipsRef = FirebaseFirestore.instance
-      .collection('memberships');
+  // 🔥 ĐỔI SANG PAYMENTS
+  final CollectionReference paymentsRef = FirebaseFirestore.instance.collection(
+    'payments',
+  );
+
   final NumberFormat moneyFmt = NumberFormat.currency(
     locale: 'vi_VN',
     symbol: '₫',
@@ -57,13 +60,13 @@ class StatisticsPage extends StatelessWidget {
                 ),
               ),
 
-              // Các menu điều hướng
+              // Menu
               ListTile(
                 leading: const Icon(Icons.dashboard),
                 title: const Text("Tổng quan"),
-                onTap: () => {
-                  Navigator.pop(context),
-                  Navigator.pushNamed(context, '/admin'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.pushNamed(context, '/admin');
                 },
               ),
               ListTile(
@@ -82,7 +85,6 @@ class StatisticsPage extends StatelessWidget {
                   Navigator.pushNamed(context, '/admin/packages');
                 },
               ),
-              // 🔥 Thêm menu quản lý PT
               ListTile(
                 leading: const Icon(Icons.sports_gymnastics),
                 title: const Text("Quản lý PT"),
@@ -115,13 +117,15 @@ class StatisticsPage extends StatelessWidget {
           ),
         ),
       ),
+
+      // BODY
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             AdminStatisticsChart(
-              membershipsRef: membershipsRef,
+              paymentsRef: paymentsRef, // 🔥 TRUYỀN PAYMENTS
               moneyFmt: moneyFmt,
             ),
           ],

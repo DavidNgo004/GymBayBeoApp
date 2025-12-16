@@ -5,12 +5,12 @@ import 'package:month_picker_dialog/month_picker_dialog.dart';
 import 'package:fl_chart/fl_chart.dart';
 
 class AdminStatisticsChart extends StatefulWidget {
-  final CollectionReference membershipsRef;
+  final CollectionReference paymentsRef;
   final NumberFormat moneyFmt;
 
   const AdminStatisticsChart({
     super.key,
-    required this.membershipsRef,
+    required this.paymentsRef,
     required this.moneyFmt,
   });
 
@@ -19,10 +19,12 @@ class AdminStatisticsChart extends StatefulWidget {
 }
 
 class _AdminStatisticsChartState extends State<AdminStatisticsChart> {
-  String filterType = 'day'; // day, month, year
+  String filterType = 'day'; // day, month
   DateTime selectedDate = DateTime.now();
-  List<Map<String, dynamic>> memberships = [];
+
+  List<Map<String, dynamic>> payments = [];
   double totalRevenue = 0;
+
   List<BarChartGroupData> barGroups = [];
   List<String> xLabels = [];
 
@@ -33,9 +35,12 @@ class _AdminStatisticsChartState extends State<AdminStatisticsChart> {
   }
 
   Future<void> _fetchData() async {
-    QuerySnapshot snapshot = await widget.membershipsRef.get();
+    QuerySnapshot snapshot = await widget.paymentsRef
+        .where('status', isEqualTo: 'success')
+        .get();
+
     List<Map<String, dynamic>> all = snapshot.docs.map((d) {
-      var data = d.data() as Map<String, dynamic>;
+      final data = d.data() as Map<String, dynamic>;
       data['id'] = d.id;
       return data;
     }).toList();
@@ -44,28 +49,26 @@ class _AdminStatisticsChartState extends State<AdminStatisticsChart> {
     if (filterType == 'day') {
       start = DateTime(selectedDate.year, selectedDate.month, selectedDate.day);
       end = start.add(const Duration(days: 1));
-    } else if (filterType == 'month') {
+    } else {
       start = DateTime(selectedDate.year, selectedDate.month);
       end = DateTime(selectedDate.year, selectedDate.month + 1);
-    } else {
-      start = DateTime(selectedDate.year, 1, 1);
-      end = DateTime(selectedDate.year + 1, 1, 1);
     }
 
-    List<Map<String, dynamic>> filtered = all.where((m) {
-      Timestamp createdAt = m['createdAt'];
+    List<Map<String, dynamic>> filtered = all.where((p) {
+      Timestamp createdAt = p['createdAt'];
       DateTime date = createdAt.toDate();
       return !date.isBefore(start) && date.isBefore(end);
     }).toList();
 
     totalRevenue = filtered.fold(
       0,
-      (sum, m) => sum + (m['pricePaid'] ?? 0).toDouble(),
+      (sum, p) => sum + (p['amount'] ?? 0).toDouble(),
     );
 
     _generateChartData(filtered);
+
     setState(() {
-      memberships = filtered;
+      payments = filtered;
     });
   }
 
@@ -78,43 +81,34 @@ class _AdminStatisticsChartState extends State<AdminStatisticsChart> {
         groupedRevenue[i] = 0;
         xLabels.add('Ca ${i + 1}');
       }
-      for (var m in data) {
-        DateTime time = (m['createdAt'] as Timestamp).toDate();
+
+      for (var p in data) {
+        DateTime time = (p['createdAt'] as Timestamp).toDate();
         int shiftIndex = time.hour ~/ 4;
         groupedRevenue[shiftIndex] =
-            (groupedRevenue[shiftIndex] ?? 0) + (m['pricePaid'] ?? 0);
+            (groupedRevenue[shiftIndex] ?? 0) + (p['amount'] ?? 0);
       }
-    } else if (filterType == 'month') {
+    } else {
       for (int i = 1; i <= 4; i++) {
         groupedRevenue[i] = 0;
         xLabels.add('Tuần $i');
       }
-      for (var m in data) {
-        DateTime time = (m['createdAt'] as Timestamp).toDate();
+
+      for (var p in data) {
+        DateTime time = (p['createdAt'] as Timestamp).toDate();
         int week = ((time.day - 1) ~/ 7) + 1;
         if (week > 4) week = 4;
-        groupedRevenue[week] =
-            (groupedRevenue[week] ?? 0) + (m['pricePaid'] ?? 0);
-      }
-    } else {
-      for (int q = 1; q <= 4; q++) {
-        groupedRevenue[q] = 0;
-        xLabels.add('Q$q');
-      }
-      for (var item in data) {
-        DateTime time = (item['createdAt'] as Timestamp).toDate();
-        int quarter = ((time.month - 1) ~/ 3) + 1;
-        groupedRevenue[quarter] =
-            (groupedRevenue[quarter] ?? 0) + (item['pricePaid'] ?? 0);
+
+        groupedRevenue[week] = (groupedRevenue[week] ?? 0) + (p['amount'] ?? 0);
       }
     }
 
-    barGroups = groupedRevenue.entries.map((entry) {
+    barGroups = groupedRevenue.entries.map((e) {
       return BarChartGroupData(
-        x: entry.key,
+        x: e.key,
         barRods: [
           BarChartRodData(
-            toY: entry.value,
+            toY: e.value,
             width: 14,
             borderRadius: BorderRadius.circular(4),
             gradient: const LinearGradient(
@@ -142,7 +136,7 @@ class _AdminStatisticsChartState extends State<AdminStatisticsChart> {
         setState(() => selectedDate = picked);
         _fetchData();
       }
-    } else if (filterType == 'month') {
+    } else {
       DateTime? picked = await showMonthPicker(
         context: rootContext,
         initialDate: selectedDate,
@@ -156,15 +150,16 @@ class _AdminStatisticsChartState extends State<AdminStatisticsChart> {
 
   Widget _buildBarChart() {
     if (barGroups.isEmpty) {
-      return const Center(child: Text("Không có dữ liệu"));
+      return const Center(child: Text('Không có dữ liệu'));
     }
 
     return SizedBox(
       height: 280,
       child: BarChart(
         BarChartData(
-          alignment: BarChartAlignment.spaceBetween,
-          gridData: FlGridData(show: true, drawHorizontalLine: true),
+          barGroups: barGroups,
+          gridData: FlGridData(show: true),
+          borderData: FlBorderData(show: false),
           titlesData: FlTitlesData(
             leftTitles: AxisTitles(
               sideTitles: SideTitles(
@@ -183,8 +178,8 @@ class _AdminStatisticsChartState extends State<AdminStatisticsChart> {
               sideTitles: SideTitles(
                 showTitles: true,
                 getTitlesWidget: (value, meta) {
-                  int index = barGroups.indexWhere((g) => g.x == value);
-                  if (index == -1 || index >= xLabels.length) {
+                  int index = barGroups.indexWhere((g) => g.x == value.toInt());
+                  if (index < 0 || index >= xLabels.length) {
                     return const SizedBox();
                   }
                   return Padding(
@@ -197,11 +192,9 @@ class _AdminStatisticsChartState extends State<AdminStatisticsChart> {
                 },
               ),
             ),
-            rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
             topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
           ),
-          borderData: FlBorderData(show: false),
-          barGroups: barGroups,
         ),
       ),
     );
@@ -210,8 +203,8 @@ class _AdminStatisticsChartState extends State<AdminStatisticsChart> {
   @override
   Widget build(BuildContext context) {
     return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       elevation: 3,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -226,10 +219,8 @@ class _AdminStatisticsChartState extends State<AdminStatisticsChart> {
                     DropdownMenuItem(value: 'day', child: Text('Theo ngày')),
                     DropdownMenuItem(value: 'month', child: Text('Theo tháng')),
                   ],
-                  onChanged: (value) {
-                    setState(() {
-                      filterType = value!;
-                    });
+                  onChanged: (v) {
+                    setState(() => filterType = v!);
                     _pickDate();
                   },
                 ),
@@ -239,14 +230,12 @@ class _AdminStatisticsChartState extends State<AdminStatisticsChart> {
                   label: Text(
                     filterType == 'day'
                         ? DateFormat('dd/MM/yyyy').format(selectedDate)
-                        : filterType == 'month'
-                        ? DateFormat('MM/yyyy').format(selectedDate)
-                        : DateFormat('yyyy').format(selectedDate),
+                        : DateFormat('MM/yyyy').format(selectedDate),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             Text(
               'Tổng doanh thu: ${widget.moneyFmt.format(totalRevenue)}',
               style: const TextStyle(
@@ -256,25 +245,6 @@ class _AdminStatisticsChartState extends State<AdminStatisticsChart> {
             ),
             const SizedBox(height: 16),
             _buildBarChart(),
-            const SizedBox(height: 16),
-
-            // ✅ Chú thích trục X
-            if (filterType == 'day')
-              const Text(
-                'Chú thích: Ca 1 (0–4h), Ca 2 (4–8h), Ca 3 (8–12h), Ca 4 (12–16h), Ca 5 (16–20h), Ca 6 (20–24h)',
-                style: TextStyle(fontSize: 11, color: Colors.grey),
-              )
-            else if (filterType == 'month')
-              const Text(
-                'Chú thích: Tuần 1–4 tương ứng 4 tuần trong tháng',
-                style: TextStyle(fontSize: 11, color: Colors.grey),
-              )
-            else
-              const Text(
-                'Chú thích: Q1 (Tháng 1–3), Q2 (Tháng 4–6), Q3 (Tháng 7–9), Q4 (Tháng 10–12)',
-                style: TextStyle(fontSize: 11, color: Colors.grey),
-              ),
-
             const Divider(height: 30),
             Text(
               'Chi tiết doanh thu',
@@ -282,104 +252,122 @@ class _AdminStatisticsChartState extends State<AdminStatisticsChart> {
             ),
             const SizedBox(height: 8),
 
-            if (memberships.isEmpty)
-              const Text('Không có dữ liệu cho thời gian này.')
+            if (payments.isEmpty)
+              const Text('Không có dữ liệu')
             else
               Column(
-                children: memberships.map((m) {
-                  final createdAt = (m['createdAt'] as Timestamp).toDate();
-                  final userId = m['userId'] ?? '';
+                children: payments.map((p) {
+                  final createdAt = (p['createdAt'] as Timestamp).toDate();
+                  final userId = p['userId'] ?? '';
+                  final packageId = p['packageId'];
 
                   return FutureBuilder<DocumentSnapshot>(
-                    future: (userId != '')
-                        ? FirebaseFirestore.instance
-                              .collection('customers')
-                              .doc(userId)
-                              .get()
-                        : Future.value(null),
+                    future: FirebaseFirestore.instance
+                        .collection('customers')
+                        .doc(userId)
+                        .get(),
                     builder: (context, userSnap) {
                       String name = 'Không xác định';
-                      String img = '';
                       String email = '';
+                      String img = '';
+
                       if (userSnap.hasData &&
                           userSnap.data != null &&
                           userSnap.data!.exists) {
                         final userData =
-                            userSnap.data!.data() as Map<String, dynamic>? ??
-                            {};
-                        name = userData['name'] ?? 'Khách hàng không rõ';
-                        email = userData['email'] ?? 'Không xác định';
+                            userSnap.data!.data() as Map<String, dynamic>;
+                        name = userData['name'] ?? 'Khách hàng';
+                        email = userData['email'] ?? '';
                         img = userData['imageUrl'] ?? '';
                       }
 
-                      return Card(
-                        margin: const EdgeInsets.symmetric(
-                          vertical: 6,
-                          horizontal: 12,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        color: Colors.deepPurple.shade50.withOpacity(0.6),
-                        elevation: 3,
-                        child: Padding(
-                          padding: const EdgeInsets.all(12),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              // Avatar
-                              img.isNotEmpty
-                                  ? CircleAvatar(
-                                      radius: 25,
-                                      backgroundImage: NetworkImage(img),
-                                    )
-                                  : const CircleAvatar(
-                                      radius: 25,
-                                      backgroundColor: Colors.deepPurple,
-                                      child: Icon(
-                                        Icons.person,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                              const SizedBox(width: 14),
+                      return FutureBuilder<QuerySnapshot>(
+                        future: FirebaseFirestore.instance
+                            .collection('memberships')
+                            .where('packageId', isEqualTo: packageId)
+                            .limit(1)
+                            .get(),
+                        builder: (context, packSnap) {
+                          String packageName = 'Không rõ gói';
+                          if (packSnap.hasData &&
+                              packSnap.data!.docs.isNotEmpty) {
+                            final packData =
+                                packSnap.data!.docs.first.data()
+                                    as Map<String, dynamic>;
+                            packageName = packData['packageName'];
+                          }
 
-                              // Thông tin bên phải
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      m['packageName'] ?? '',
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 16,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      '$name\n${DateFormat('dd/MM/yyyy HH:mm').format(createdAt)}',
-                                      style: const TextStyle(
-                                        fontSize: 13,
-                                        height: 1.3,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
+                          return Card(
+                            margin: const EdgeInsets.symmetric(
+                              vertical: 6,
+                              horizontal: 12,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            color: Colors.deepPurple.shade50.withOpacity(0.6),
+                            elevation: 3,
+                            child: Padding(
+                              padding: const EdgeInsets.all(12),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  // Avatar
+                                  img.isNotEmpty
+                                      ? CircleAvatar(
+                                          radius: 25,
+                                          backgroundImage: NetworkImage(img),
+                                        )
+                                      : const CircleAvatar(
+                                          radius: 25,
+                                          backgroundColor: Colors.deepPurple,
+                                          child: Icon(
+                                            Icons.person,
+                                            color: Colors.white,
+                                          ),
+                                        ),
 
-                              // Giá tiền
-                              Text(
-                                widget.moneyFmt.format(m['pricePaid'] ?? 0),
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.deepPurple,
-                                  fontSize: 15,
-                                ),
+                                  const SizedBox(width: 14),
+
+                                  // Thông tin
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          packageName,
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 16,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          '$name\n${DateFormat('dd/MM/yyyy HH:mm').format(createdAt)}',
+                                          style: const TextStyle(
+                                            fontSize: 13,
+                                            height: 1.3,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+
+                                  // Giá tiền
+                                  Text(
+                                    widget.moneyFmt.format(p['amount'] ?? 0),
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.deepPurple,
+                                      fontSize: 15,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
-                        ),
+                            ),
+                          );
+                        },
                       );
                     },
                   );

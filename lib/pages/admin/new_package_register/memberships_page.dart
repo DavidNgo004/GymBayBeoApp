@@ -14,8 +14,12 @@ class AdminMembershipsPage extends StatefulWidget {
 }
 
 class _AdminMembershipsPageState extends State<AdminMembershipsPage> {
-  final CollectionReference membershipsRef = FirebaseFirestore.instance
-      .collection('memberships');
+  final CollectionReference paymentsRef = FirebaseFirestore.instance.collection(
+    'payments',
+  );
+  final CollectionReference packagesRef = FirebaseFirestore.instance.collection(
+    'packages',
+  );
   final CollectionReference customersRef = FirebaseFirestore.instance
       .collection('customers');
 
@@ -98,8 +102,8 @@ class _AdminMembershipsPageState extends State<AdminMembershipsPage> {
   }
 
   // Lọc danh sách gói tập
-  Stream<QuerySnapshot> _getFilteredMemberships() {
-    Query query = membershipsRef;
+  Stream<QuerySnapshot> _getFilteredPayments() {
+    Query query = paymentsRef.where('status', isEqualTo: 'success');
 
     if (startDate != null && endDate != null) {
       query = query
@@ -115,15 +119,15 @@ class _AdminMembershipsPageState extends State<AdminMembershipsPage> {
 
     switch (selectedPriceFilter) {
       case '0.5':
-        query = query.where('pricePaid', isLessThan: 500000);
+        query = query.where('amount', isLessThan: 500000);
         break;
       case '0.5-1':
         query = query
-            .where('pricePaid', isGreaterThanOrEqualTo: 500000)
-            .where('pricePaid', isLessThanOrEqualTo: 1000000);
+            .where('amount', isGreaterThanOrEqualTo: 500000)
+            .where('amount', isLessThanOrEqualTo: 1000000);
         break;
       case '1':
-        query = query.where('pricePaid', isGreaterThan: 1000000);
+        query = query.where('amount', isGreaterThan: 1000000);
         break;
     }
 
@@ -351,7 +355,7 @@ class _AdminMembershipsPageState extends State<AdminMembershipsPage> {
             // --- Danh sách gói tập ---
             Expanded(
               child: StreamBuilder<QuerySnapshot>(
-                stream: _getFilteredMemberships(),
+                stream: _getFilteredPayments(),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
@@ -363,16 +367,13 @@ class _AdminMembershipsPageState extends State<AdminMembershipsPage> {
 
                   final docs = snapshot.data!.docs.where((doc) {
                     final data = doc.data() as Map<String, dynamic>;
-                    final pkg = (data['packageName'] ?? '')
-                        .toString()
-                        .toLowerCase();
 
                     if (searchQuery.isNotEmpty &&
                         matchedCustomerIds.isNotEmpty) {
                       return matchedCustomerIds.contains(data['userId']);
                     }
 
-                    return pkg.contains(searchQuery);
+                    return true;
                   }).toList();
 
                   if (docs.isEmpty) {
@@ -385,31 +386,33 @@ class _AdminMembershipsPageState extends State<AdminMembershipsPage> {
                     itemBuilder: (context, i) {
                       final data = docs[i].data() as Map<String, dynamic>;
                       final userId = data['userId'] ?? '';
-                      final pkg = data['packageName'] ?? '';
+                      final packageId = data['packageId'];
                       final created = (data['createdAt'] as Timestamp?)
                           ?.toDate();
-                      final price = data['pricePaid'];
+                      final price = data['amount'];
 
-                      return FutureBuilder<DocumentSnapshot>(
-                        future: FirebaseFirestore.instance
-                            .collection('customers')
-                            .doc(userId)
-                            .get(),
-                        builder: (context, userSnap) {
-                          String name = 'Không xác định';
-                          String img = '';
-                          String email = '';
-                          if (userSnap.hasData &&
-                              userSnap.data != null &&
-                              userSnap.data!.exists) {
-                            final userData =
-                                userSnap.data!.data()
-                                    as Map<String, dynamic>? ??
-                                {};
-                            name = userData['name'] ?? 'Không rõ tên';
-                            img = userData['imageUrl'] ?? '';
-                            email = userData['email'] ?? '';
+                      return FutureBuilder<List<DocumentSnapshot>>(
+                        future: Future.wait([
+                          customersRef.doc(userId).get(),
+                          packagesRef.doc(packageId).get(),
+                        ]),
+                        builder: (context, snap) {
+                          if (!snap.hasData) {
+                            return const SizedBox();
                           }
+
+                          final userData =
+                              snap.data![0].data() as Map<String, dynamic>? ??
+                              {};
+                          final packageData =
+                              snap.data![1].data() as Map<String, dynamic>? ??
+                              {};
+
+                          final name = userData['name'] ?? 'Không rõ';
+                          final email = userData['email'] ?? '';
+                          final img = userData['imageUrl'] ?? '';
+                          final pkgTitle =
+                              packageData['title'] ?? 'Không rõ gói';
 
                           return Container(
                             margin: const EdgeInsets.symmetric(
@@ -429,7 +432,6 @@ class _AdminMembershipsPageState extends State<AdminMembershipsPage> {
                             ),
                             child: ListTile(
                               leading: CircleAvatar(
-                                backgroundColor: Colors.deepPurple.shade100,
                                 backgroundImage: img.isNotEmpty
                                     ? NetworkImage(img)
                                     : null,
@@ -441,24 +443,21 @@ class _AdminMembershipsPageState extends State<AdminMembershipsPage> {
                                     : null,
                               ),
                               title: Text(
-                                pkg.toString(),
+                                pkgTitle, // ✅ TÊN GÓI TẬP TỪ PACKAGES
                                 style: const TextStyle(
                                   fontWeight: FontWeight.w600,
-                                  fontSize: 15,
                                 ),
                               ),
                               subtitle: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text('Khách: $name'),
-                                  const SizedBox(height: 2),
                                   Text(
                                     email,
                                     style: const TextStyle(fontSize: 12),
                                   ),
-                                  const SizedBox(height: 4),
                                   Text(
-                                    price != null ? moneyFmt.format(price) : '',
+                                    moneyFmt.format(price),
                                     style: const TextStyle(
                                       color: Colors.purple,
                                       fontWeight: FontWeight.bold,
@@ -470,10 +469,6 @@ class _AdminMembershipsPageState extends State<AdminMembershipsPage> {
                                 created != null
                                     ? DateFormat('dd/MM/yyyy').format(created)
                                     : '',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.secondary,
-                                ),
                               ),
                             ),
                           );
